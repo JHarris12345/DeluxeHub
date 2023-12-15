@@ -19,7 +19,6 @@ import fun.lewisdev.deluxehub.module.ModuleType;
 import fun.lewisdev.deluxehub.module.modules.hologram.HologramManager;
 import fun.lewisdev.deluxehub.utility.TextUtil;
 import fun.lewisdev.deluxehub.utility.UpdateChecker;
-import org.bstats.bukkit.MetricsLite;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -64,10 +63,10 @@ public class DeluxeHubPlugin extends JavaPlugin {
             return;
         }
 
-        MinecraftVersion.disableUpdateCheck();
+        //MinecraftVersion.disableUpdateCheck();
 
         // Enable bStats metrics
-        new MetricsLite(this, BSTATS_ID);
+        //new MetricsLite(this, BSTATS_ID);
 
         // Check plugin hooks
         hooksManager = new HooksManager(this);
