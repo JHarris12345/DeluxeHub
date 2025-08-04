@@ -21,15 +21,23 @@ import fun.lewisdev.deluxehub.utility.TextUtil;
 import fun.lewisdev.deluxehub.utility.UpdateChecker;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.geysermc.floodgate.api.FloodgateApi;
 
+import java.util.UUID;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DeluxeHubPlugin extends JavaPlugin {
 
     private static final int BSTATS_ID = 3151;
+
+    public static DeluxeHubPlugin plugin;
+    public static FloodgateApi floodgate;
 
     private ConfigManager configManager;
     private ActionManager actionManager;
@@ -41,6 +49,9 @@ public class DeluxeHubPlugin extends JavaPlugin {
 
     public void onEnable() {
         long start = System.currentTimeMillis();
+        plugin = this;
+
+        floodgate = FloodgateApi.getInstance();
 
         getLogger().log(Level.INFO, " _   _            _          _    _ ");
         getLogger().log(Level.INFO, "| \\ |_ |  | | \\/ |_ |_| | | |_)   _)");
@@ -95,10 +106,6 @@ public class DeluxeHubPlugin extends JavaPlugin {
 
         // Action system
         actionManager = new ActionManager(this);
-
-        // Load update checker (if enabled)
-        if (getConfigManager().getFile(ConfigType.SETTINGS).getConfig().getBoolean("update-check"))
-            new UpdateChecker(this).checkForUpdate();
 
         // Register BungeeCord channels
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
@@ -183,5 +190,26 @@ public class DeluxeHubPlugin extends JavaPlugin {
 
     public ActionManager getActionManager() {
         return actionManager;
+    }
+
+    public boolean isPlayerBedrock(UUID uuid) {
+        return uuid.toString().startsWith("00000000-0000-0000");
+    }
+
+    public static DeluxeHubPlugin getInstance() {
+        return plugin;
+    }
+
+    public static String colour(String string) {
+        Pattern pattern = Pattern.compile("&?#[A-Fa-f0-9]{6}");
+        Matcher matcher = pattern.matcher(string);
+        String output = ChatColor.translateAlternateColorCodes('&', string);
+
+        while (matcher.find()) {
+            String color = string.substring(matcher.start(), matcher.end());
+            output = output.replace(color, "" + net.md_5.bungee.api.ChatColor.of(color.replace("&", "")));
+        }
+
+        return output;
     }
 }

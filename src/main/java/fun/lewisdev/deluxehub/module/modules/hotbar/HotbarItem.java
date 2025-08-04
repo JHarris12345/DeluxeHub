@@ -116,7 +116,7 @@ public abstract class HotbarItem implements Listener {
 
     @EventHandler
     public void hotbarItemInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        //if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (XMaterial.supports(9) && event.getHand() != EquipmentSlot.HAND) return;
 
         Player player = event.getPlayer();
