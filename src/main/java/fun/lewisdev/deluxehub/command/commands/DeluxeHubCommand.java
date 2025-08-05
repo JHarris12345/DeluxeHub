@@ -189,7 +189,15 @@ public class DeluxeHubCommand {
                 sender.sendMessage(TextUtil.color("&c" + args.getString(1) + " is not a valid menu ID."));
                 return;
             }
-            inventory.openInventory((Player) sender);
+
+            Player player = (Player) sender;
+
+            if (DeluxeHubPlugin.getInstance().isPlayerBedrock(player.getUniqueId())) {
+                DeluxeHubPlugin.floodgate.sendForm(player.getUniqueId(), DeluxeHubPlugin.plugin.createSurvivalSelector(player));
+
+            } else {
+                inventory.openInventory(player);
+            }
         }
 
         /*
