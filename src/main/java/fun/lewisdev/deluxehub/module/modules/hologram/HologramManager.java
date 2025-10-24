@@ -10,7 +10,6 @@ import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
-import org.bukkit.event.Listener;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -60,7 +59,7 @@ public class HologramManager extends Module {
         FileConfiguration config = getConfig(ConfigType.DATA);
         holograms.forEach(hologram -> {
             config.set("holograms." + hologram.getName() + ".location", hologram.getLocation());
-            List<String> lines = new ArrayList<String>();
+            List<String> lines = new ArrayList<>();
             for (ArmorStand stand : hologram.getStands()) lines.add(stand.getCustomName());
             config.set("holograms." + hologram.getName() + ".lines", lines);
         });
@@ -103,7 +102,7 @@ public class HologramManager extends Module {
     public void deleteNearbyHolograms(Location location) {
         World world = location.getWorld();
         if (world == null) return;
-        world.getNearbyEntities(location, 0, 20, 0).stream().filter(entity -> entity instanceof ArmorStand).forEach(Entity::remove);
+        world.getNearbyEntities(location, 0.5, 20, 0.5).stream().filter(entity -> entity instanceof ArmorStand).forEach(Entity::remove);
     }
 
 }

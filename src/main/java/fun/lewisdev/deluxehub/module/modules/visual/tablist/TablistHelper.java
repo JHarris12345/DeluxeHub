@@ -1,10 +1,9 @@
 package fun.lewisdev.deluxehub.module.modules.visual.tablist;
 
+import com.cryptomorin.xseries.reflection.XReflection;
 import com.google.common.base.Strings;
-import fun.lewisdev.deluxehub.DeluxeHubPlugin;
-import fun.lewisdev.deluxehub.utility.TextUtil;
 import fun.lewisdev.deluxehub.utility.reflection.ReflectionUtils;
-import fun.lewisdev.deluxehub.utility.universal.XMaterial;
+import net.zithium.library.utils.ColorUtil;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Field;
@@ -17,14 +16,16 @@ public class TablistHelper {
 
         Objects.requireNonNull(player, "Cannot update tab for null player");
         header = Strings.isNullOrEmpty(header) ?
-                "" : TextUtil.color(header).replace("%player%", player.getDisplayName());
+                "" : ColorUtil.color(header).replace("%player%", player.getDisplayName());
         footer = Strings.isNullOrEmpty(footer) ?
-                "" : TextUtil.color(footer).replace("%player%", player.getDisplayName());
+                "" : ColorUtil.color(footer).replace("%player%", player.getDisplayName());
 
-        if(XMaterial.supports(13)) {
+
+        if (XReflection.supports(13)) {
             player.setPlayerListHeaderFooter(header, footer);
             return;
         }
+
 
         try {
             Method chatComponentBuilderMethod = ReflectionUtils.getNMSClass("IChatBaseComponent").getDeclaredClasses()[0].getMethod("a", String.class);

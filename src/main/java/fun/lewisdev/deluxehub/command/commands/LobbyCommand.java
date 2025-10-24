@@ -6,7 +6,7 @@ import cl.bgmp.minecraft.util.commands.exceptions.CommandException;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.module.ModuleType;
 import fun.lewisdev.deluxehub.module.modules.world.LobbySpawn;
-import fun.lewisdev.deluxehub.utility.TextUtil;
+import net.zithium.library.utils.ColorUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 
 public class LobbyCommand {
 
-    private DeluxeHubPlugin plugin;
+    private final DeluxeHubPlugin plugin;
 
     public LobbyCommand(DeluxeHubPlugin plugin) {
         this.plugin = plugin;
@@ -33,7 +33,7 @@ public class LobbyCommand {
 
         Location location = ((LobbySpawn) plugin.getModuleManager().getModule(ModuleType.LOBBY)).getLocation();
         if (location == null) {
-            sender.sendMessage(TextUtil.color("&cThe spawn location has not been set &7(/setlobby)&c."));
+            sender.sendMessage(ColorUtil.color("&cThe spawn location has not been set &7(/setlobby)&c."));
             return;
         }
 

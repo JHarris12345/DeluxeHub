@@ -14,12 +14,10 @@ public class MenuAction implements Action {
 
     @Override
     public void execute(DeluxeHubPlugin plugin, Player player, String data) {
-        AbstractInventory inventory = plugin.getInventoryManager().getInventory(data);
-
-        if (inventory != null) {
-            inventory.openInventory(player);
-        } else {
-            plugin.getLogger().warning("[MENU] Action Failed: Menu '" + data + "' not found.");
-        }
+        plugin.getInventoryManager().getInventory(data).ifPresentOrElse(
+                inventory -> inventory.openInventory(player),
+                () -> plugin.getLogger().warning("[MENU] Action Failed: Menu '" + data + "' not found.")
+        );
     }
+
 }

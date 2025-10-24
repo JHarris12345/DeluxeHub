@@ -1,41 +1,45 @@
 package fun.lewisdev.deluxehub.utility;
 
+import com.cryptomorin.xseries.XMaterial;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
-import fun.lewisdev.deluxehub.hook.hooks.head.HeadHook;
-import fun.lewisdev.deluxehub.utility.universal.XMaterial;
-import org.bukkit.Color;
+import net.zithium.library.items.Base64Util;
+import net.zithium.library.utils.ColorUtil;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ItemStackBuilder {
 
     private final ItemStack ITEM_STACK;
 
     private static final DeluxeHubPlugin PLUGIN = JavaPlugin.getPlugin(DeluxeHubPlugin.class);
+    private static final Multimap<Attribute, AttributeModifier> EMPTY_ATTRIBUTES_MAP =
+            MultimapBuilder.hashKeys().hashSetValues().build();
 
     public ItemStackBuilder(ItemStack item) {
         this.ITEM_STACK = item;
     }
 
-    public static ItemStackBuilder getItemStack(ConfigurationSection section, Player player) {
+    public static @NotNull ItemStackBuilder getItemStack(@NotNull ConfigurationSection section, Player player) {
         ItemStack item = XMaterial.matchXMaterial(section.getString("material").toUpperCase()).get().parseItem();
 
-        if (item.getType() == XMaterial.PLAYER_HEAD.parseMaterial()) {
-            if (section.contains("base64")) {
-                item = ((HeadHook) PLUGIN.getHookManager().getPluginHook("BASE64")).getHead(section.getString("base64")).clone();
-            } else if (section.contains("hdb") && PLUGIN.getHookManager().isHookEnabled("HEAD_DATABASE")) {
-                item = ((HeadHook) PLUGIN.getHookManager().getPluginHook("HEAD_DATABASE")).getHead(section.getString("hdb"));
-            }
+        if (item.getType() == Material.PLAYER_HEAD && section.contains("base64")) {
+            item = Base64Util.getBaseHead(section.getString("base64")).clone();
         }
 
         ItemStackBuilder builder = new ItemStackBuilder(item);
@@ -81,52 +85,62 @@ public class ItemStackBuilder {
         return builder;
     }
 
-    public static ItemStackBuilder getItemStack(ConfigurationSection section) {
+    public static @NotNull ItemStackBuilder getItemStack(ConfigurationSection section) {
         return getItemStack(section, null);
     }
 
-    public ItemStackBuilder withAmount(int amount) {
-        ITEM_STACK.setAmount(amount);
+    public ItemStackBuilder withAmount(Integer amount) {
+        ITEM_STACK.setAmount(Optional.ofNullable(amount).orElse(1));
         return this;
     }
 
+
     public ItemStackBuilder withFlags(ItemFlag... flags) {
         ItemMeta meta = ITEM_STACK.getItemMeta();
-        meta.addItemFlags(flags);
+        if (meta != null) {
+            meta.addItemFlags(flags);
+            for (ItemFlag itemFlag : flags) {
+                if (itemFlag == ItemFlag.HIDE_ATTRIBUTES) {
+                    meta.setAttributeModifiers(EMPTY_ATTRIBUTES_MAP);
+                    break;
+                }
+            }
+        }
+
         ITEM_STACK.setItemMeta(meta);
         return this;
     }
 
     public ItemStackBuilder withName(String name) {
         final ItemMeta meta = ITEM_STACK.getItemMeta();
-        meta.setDisplayName(TextUtil.color(name));
+        meta.setDisplayName(ColorUtil.color(name));
         ITEM_STACK.setItemMeta(meta);
         return this;
     }
 
     public ItemStackBuilder withName(String name, Player player) {
         final ItemMeta meta = ITEM_STACK.getItemMeta();
-        meta.setDisplayName(TextUtil.color(PlaceholderUtil.setPlaceholders(name, player)));
+        meta.setDisplayName(ColorUtil.color(PlaceholderUtil.setPlaceholders(name, player)));
         ITEM_STACK.setItemMeta(meta);
         return this;
     }
 
     public ItemStackBuilder setSkullOwner(String owner) {
-        try {
-            SkullMeta im = (SkullMeta) ITEM_STACK.getItemMeta();
-            im.setOwner(owner);
-            ITEM_STACK.setItemMeta(im);
-        } catch (ClassCastException expected) {
+        ItemMeta meta = ITEM_STACK.getItemMeta();
+        if (meta instanceof SkullMeta skullMeta) {
+            skullMeta.setOwner(owner);
+            ITEM_STACK.setItemMeta(skullMeta);
         }
         return this;
     }
 
+
     public ItemStackBuilder withLore(List<String> lore, Player player) {
         final ItemMeta meta = ITEM_STACK.getItemMeta();
-        List<String> coloredLore = new ArrayList<String>();
+        List<String> coloredLore = new ArrayList<>();
         for (String s : lore) {
             s = PlaceholderUtil.setPlaceholders(s, player);
-            coloredLore.add(TextUtil.color(s));
+            coloredLore.add(ColorUtil.color(s));
         }
         meta.setLore(coloredLore);
         ITEM_STACK.setItemMeta(meta);
@@ -135,81 +149,28 @@ public class ItemStackBuilder {
 
     public ItemStackBuilder withLore(List<String> lore) {
         final ItemMeta meta = ITEM_STACK.getItemMeta();
-        List<String> coloredLore = new ArrayList<String>();
+        List<String> coloredLore = new ArrayList<>();
         for (String s : lore) {
-            coloredLore.add(TextUtil.color(s));
+            coloredLore.add(ColorUtil.color(s));
         }
         meta.setLore(coloredLore);
         ITEM_STACK.setItemMeta(meta);
         return this;
     }
 
-    public ItemStackBuilder withCustomModelData(int data) {
+    private ItemStackBuilder withCustomModelData(int data) {
         final ItemMeta meta = ITEM_STACK.getItemMeta();
         meta.setCustomModelData(data);
         ITEM_STACK.setItemMeta(meta);
         return this;
     }
 
-    @SuppressWarnings("deprecation")
-    public ItemStackBuilder withDurability(int durability) {
-        ITEM_STACK.setDurability((short) durability);
-        return this;
-    }
-
-    @SuppressWarnings("deprecation")
-    public ItemStackBuilder withData(int data) {
-        ITEM_STACK.setDurability((short) data);
-        return this;
-    }
-
-    public ItemStackBuilder withEnchantment(Enchantment enchantment, final int level) {
-        ITEM_STACK.addUnsafeEnchantment(enchantment, level);
-        return this;
-    }
-
-    public ItemStackBuilder withEnchantment(Enchantment enchantment) {
-        ITEM_STACK.addUnsafeEnchantment(enchantment, 1);
-        return this;
-    }
-
-    public ItemStackBuilder withGlow() {
+    private ItemStackBuilder withGlow() {
         final ItemMeta meta = ITEM_STACK.getItemMeta();
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         ITEM_STACK.setItemMeta(meta);
-        ITEM_STACK.addUnsafeEnchantment(Enchantment.ARROW_INFINITE, 1);
+        ITEM_STACK.addUnsafeEnchantment(Enchantment.FIRE_ASPECT, 1);
         return this;
-    }
-
-    public ItemStackBuilder withType(Material material) {
-        ITEM_STACK.setType(material);
-        return this;
-    }
-
-    public ItemStackBuilder clearLore() {
-        final ItemMeta meta = ITEM_STACK.getItemMeta();
-        meta.setLore(new ArrayList<String>());
-        ITEM_STACK.setItemMeta(meta);
-        return this;
-    }
-
-    public ItemStackBuilder clearEnchantments() {
-        for (Enchantment enchantment : ITEM_STACK.getEnchantments().keySet()) {
-            ITEM_STACK.removeEnchantment(enchantment);
-        }
-        return this;
-    }
-
-    public ItemStackBuilder withColor(Color color) {
-        Material type = ITEM_STACK.getType();
-        if (type == Material.LEATHER_BOOTS || type == Material.LEATHER_CHESTPLATE || type == Material.LEATHER_HELMET || type == Material.LEATHER_LEGGINGS) {
-            LeatherArmorMeta meta = (LeatherArmorMeta) ITEM_STACK.getItemMeta();
-            meta.setColor(color);
-            ITEM_STACK.setItemMeta(meta);
-            return this;
-        } else {
-            throw new IllegalArgumentException("withColor is only applicable for leather armor!");
-        }
     }
 
     public ItemStack build() {

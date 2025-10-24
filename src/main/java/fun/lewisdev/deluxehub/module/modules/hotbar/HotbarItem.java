@@ -1,9 +1,9 @@
 package fun.lewisdev.deluxehub.module.modules.hotbar;
 
+import com.cryptomorin.xseries.XMaterial;
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.utility.ItemStackBuilder;
-import fun.lewisdev.deluxehub.utility.universal.XMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -20,12 +20,12 @@ import org.bukkit.inventory.PlayerInventory;
 
 public abstract class HotbarItem implements Listener {
 
-    private HotbarManager hotbarManager;
-    private ItemStack item;
+    private final HotbarManager hotbarManager;
+    private final ItemStack item;
     private ConfigurationSection configurationSection;
-    private String key;
+    private final String key;
     private String permission = null;
-    private int slot;
+    private final int slot;
     private boolean allowMovement;
 
     public HotbarItem(HotbarManager hotbarManager, ItemStack item, int slot, String key) {

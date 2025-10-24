@@ -1,5 +1,6 @@
 package fun.lewisdev.deluxehub.module.modules.world;
 
+import com.cryptomorin.xseries.XMaterial;
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.Permissions;
@@ -9,7 +10,6 @@ import fun.lewisdev.deluxehub.cooldown.CooldownType;
 import fun.lewisdev.deluxehub.module.Module;
 import fun.lewisdev.deluxehub.module.ModuleType;
 import fun.lewisdev.deluxehub.module.modules.hologram.Hologram;
-import fun.lewisdev.deluxehub.utility.universal.XMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -48,7 +48,7 @@ public class WorldProtect extends Module {
     private boolean playerDrowning;
     private boolean fireDamage;
 
-    private List<Material> interactables = Arrays.asList(
+    private final List<Material> interactable = Arrays.asList(
             XMaterial.ACACIA_DOOR.parseMaterial(),
             XMaterial.ACACIA_FENCE_GATE.parseMaterial(),
             XMaterial.ANVIL.parseMaterial(),
@@ -243,7 +243,7 @@ public class WorldProtect extends Module {
 
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 
-            for (Material material : interactables) {
+            for (Material material : interactable) {
                 if (block.getType() == material || block.getType().toString().contains("POTTED")) {
 
                     event.setCancelled(true);

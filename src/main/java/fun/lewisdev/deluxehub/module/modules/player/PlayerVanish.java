@@ -19,9 +19,11 @@ import java.util.UUID;
 public class PlayerVanish extends Module {
 
     private List<UUID> vanished;
+    private final DeluxeHubPlugin plugin;
 
     public PlayerVanish(DeluxeHubPlugin plugin) {
         super(plugin, ModuleType.VANISH);
+        this.plugin = plugin;
     }
 
     @Override
@@ -37,14 +39,14 @@ public class PlayerVanish extends Module {
     public void toggleVanish(Player player) {
         if (isVanished(player)) {
             vanished.remove(player.getUniqueId());
-            Bukkit.getOnlinePlayers().forEach(pl -> pl.showPlayer(player));
+            Bukkit.getOnlinePlayers().forEach(pl -> pl.showPlayer(plugin, player));
 
             Messages.VANISH_DISABLE.send(player);
             player.removePotionEffect(PotionEffectType.NIGHT_VISION);
 
         } else {
             vanished.add(player.getUniqueId());
-            Bukkit.getOnlinePlayers().forEach(pl -> pl.hidePlayer(player));
+            Bukkit.getOnlinePlayers().forEach(pl -> pl.hidePlayer(plugin, player));
 
             Messages.VANISH_ENABLE.send(player);
             player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 1000000, 1));

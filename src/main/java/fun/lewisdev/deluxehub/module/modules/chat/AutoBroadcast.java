@@ -1,11 +1,11 @@
 package fun.lewisdev.deluxehub.module.modules.chat;
 
+import com.cryptomorin.xseries.XSound;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.config.ConfigType;
 import fun.lewisdev.deluxehub.module.Module;
 import fun.lewisdev.deluxehub.module.ModuleType;
-import fun.lewisdev.deluxehub.utility.TextUtil;
-import fun.lewisdev.deluxehub.utility.universal.XSound;
+import net.zithium.library.utils.ColorUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -69,9 +69,7 @@ public class AutoBroadcast extends Module implements Runnable {
                 if (inDisabledWorld(player.getLocation())) continue;
 
                 broadcasts.get(count).forEach(message -> {
-                    if (message.contains("<center>") && message.contains("</center>"))
-                        message = TextUtil.getCenteredMessage(message);
-                    player.sendMessage(TextUtil.color(message));
+                    player.sendMessage(ColorUtil.color(message));
                 });
 
                 if (sound != null) player.playSound(player.getLocation(), sound, (float) volume, (float) pitch);

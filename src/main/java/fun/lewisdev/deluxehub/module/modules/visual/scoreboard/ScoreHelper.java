@@ -1,7 +1,7 @@
 package fun.lewisdev.deluxehub.module.modules.visual.scoreboard;
 
 import fun.lewisdev.deluxehub.utility.PlaceholderUtil;
-import fun.lewisdev.deluxehub.utility.TextUtil;
+import net.zithium.library.utils.ColorUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -17,9 +17,9 @@ import java.util.List;
  */
 public class ScoreHelper {
 
-    private Scoreboard scoreboard;
-    private Objective objective;
-    private Player player;
+    private final Scoreboard scoreboard;
+    private final Objective objective;
+    private final Player player;
 
     public ScoreHelper(Player player) {
         this.player = player;
@@ -62,7 +62,7 @@ public class ScoreHelper {
     }
 
     public String setPlaceholders(String text) {
-        return TextUtil.color(PlaceholderUtil.setPlaceholders(text, this.player));
+        return ColorUtil.color(PlaceholderUtil.setPlaceholders(text, this.player));
     }
 
     public void setSlotsFromList(List<String> list) {

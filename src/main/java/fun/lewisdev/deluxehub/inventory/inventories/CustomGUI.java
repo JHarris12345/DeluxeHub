@@ -5,14 +5,14 @@ import fun.lewisdev.deluxehub.inventory.AbstractInventory;
 import fun.lewisdev.deluxehub.inventory.InventoryBuilder;
 import fun.lewisdev.deluxehub.inventory.InventoryItem;
 import fun.lewisdev.deluxehub.utility.ItemStackBuilder;
-import fun.lewisdev.deluxehub.utility.TextUtil;
+import net.zithium.library.utils.ColorUtil;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.Inventory;
 
 public class CustomGUI extends AbstractInventory {
 
     private InventoryBuilder inventory;
-    private FileConfiguration config;
+    private final FileConfiguration config;
 
     public CustomGUI(DeluxeHubPlugin plugin, FileConfiguration config) {
         super(plugin);
@@ -22,7 +22,7 @@ public class CustomGUI extends AbstractInventory {
     @Override
     public void onEnable() {
 
-        InventoryBuilder inventoryBuilder = new InventoryBuilder(config.getInt("slots"), TextUtil.color(config.getString("title")));
+        InventoryBuilder inventoryBuilder = new InventoryBuilder(config.getInt("slots"), ColorUtil.color(config.getString("title")));
 
         if (config.contains("refresh") && config.getBoolean("refresh.enabled")) {
             setInventoryRefresh(config.getLong("refresh.rate"));

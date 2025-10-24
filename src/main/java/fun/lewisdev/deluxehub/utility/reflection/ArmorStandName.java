@@ -1,7 +1,6 @@
 package fun.lewisdev.deluxehub.utility.reflection;
 
-import fun.lewisdev.deluxehub.DeluxeHubPlugin;
-import fun.lewisdev.deluxehub.utility.universal.XMaterial;
+import com.cryptomorin.xseries.XMaterial;
 import org.bukkit.entity.ArmorStand;
 
 public class ArmorStandName {

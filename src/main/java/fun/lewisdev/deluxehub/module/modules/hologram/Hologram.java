@@ -1,7 +1,7 @@
 package fun.lewisdev.deluxehub.module.modules.hologram;
 
-import fun.lewisdev.deluxehub.utility.TextUtil;
 import fun.lewisdev.deluxehub.utility.reflection.ArmorStandName;
+import net.zithium.library.utils.ColorUtil;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
@@ -39,7 +39,7 @@ public class Hologram {
         stand.setVisible(false);
         stand.setGravity(false);
         stand.setCustomNameVisible(true);
-        stand.setCustomName(TextUtil.color(text).trim());
+        stand.setCustomName(ColorUtil.color(text).trim());
         stand.setCanPickupItems(false);
         stands.add(stand);
         return this;
@@ -47,7 +47,7 @@ public class Hologram {
 
     public Hologram setLine(int line, String text) {
         ArmorStand stand = stands.get(line - 1);
-        stand.setCustomName(TextUtil.color(text).trim());
+        stand.setCustomName(ColorUtil.color(text).trim());
         return this;
     }
 

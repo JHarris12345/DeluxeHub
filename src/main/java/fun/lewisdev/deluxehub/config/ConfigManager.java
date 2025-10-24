@@ -37,6 +37,9 @@ public class ConfigManager {
         Messages.setConfiguration(getFile(ConfigType.MESSAGES).getConfig());
     }
 
+    /**
+     * Saves the ConfigType.DATA file
+     */
     public void saveFiles() {
         getFile(ConfigType.DATA).save();
     }

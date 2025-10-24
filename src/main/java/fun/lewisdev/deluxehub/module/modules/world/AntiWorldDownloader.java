@@ -1,5 +1,6 @@
 package fun.lewisdev.deluxehub.module.modules.world;
 
+import com.cryptomorin.xseries.XMaterial;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
@@ -8,7 +9,6 @@ import fun.lewisdev.deluxehub.config.ConfigType;
 import fun.lewisdev.deluxehub.config.Messages;
 import fun.lewisdev.deluxehub.module.Module;
 import fun.lewisdev.deluxehub.module.ModuleType;
-import fun.lewisdev.deluxehub.utility.universal.XMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;

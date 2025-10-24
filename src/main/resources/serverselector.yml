@@ -13,9 +13,6 @@
 #       material: PLAYER_HEAD
 #       base64: <base64 id>
 #
-#     HeadDatabase
-#       material: PLAYER_HEAD
-#       hdb: <hdb id>
 #
 # ITEM FLAGS
 #   You can add flags to the item (https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/inventory/ItemFlag.html)

@@ -1,5 +1,6 @@
 package fun.lewisdev.deluxehub.module;
 
+import com.cryptomorin.xseries.reflection.XReflection;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.config.ConfigType;
 import fun.lewisdev.deluxehub.module.modules.chat.*;
@@ -15,7 +16,6 @@ import fun.lewisdev.deluxehub.module.modules.world.AntiWorldDownloader;
 import fun.lewisdev.deluxehub.module.modules.world.Launchpad;
 import fun.lewisdev.deluxehub.module.modules.world.LobbySpawn;
 import fun.lewisdev.deluxehub.module.modules.world.WorldProtect;
-import fun.lewisdev.deluxehub.utility.universal.XMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -30,7 +30,7 @@ public class ModuleManager {
 
     private DeluxeHubPlugin plugin;
     private List<String> disabledWorlds;
-    private Map<ModuleType, Module> modules = new HashMap<>();
+    private final Map<ModuleType, Module> modules = new HashMap<>();
 
     public void loadModules(DeluxeHubPlugin plugin) {
         this.plugin = plugin;
@@ -42,8 +42,11 @@ public class ModuleManager {
 
         if (config.getBoolean("disabled-worlds.invert")) {
             disabledWorlds = Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList());
-                for (String world : config.getStringList("disabled-worlds.worlds")) disabledWorlds.remove(world);
+            for (String world : config.getStringList("disabled-worlds.worlds")) {
+                disabledWorlds.remove(world);
+            }
         }
+
 
         registerModule(new AntiWorldDownloader(plugin), "anti_wdl.enabled");
         registerModule(new DoubleJump(plugin), "double_jump.enabled");
@@ -63,7 +66,7 @@ public class ModuleManager {
         registerModule(new HologramManager(plugin));
 
         // Requires 1.9+
-        if (XMaterial.supports(9)) {
+        if (XReflection.supports(9)) {
             registerModule(new PlayerOffHandSwap(plugin), "world_settings.disable_off_hand_swap");
         }
 

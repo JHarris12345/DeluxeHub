@@ -17,7 +17,6 @@ import fun.lewisdev.deluxehub.inventory.InventoryManager;
 import fun.lewisdev.deluxehub.module.ModuleManager;
 import fun.lewisdev.deluxehub.module.ModuleType;
 import fun.lewisdev.deluxehub.module.modules.hologram.HologramManager;
-import fun.lewisdev.deluxehub.utility.TextUtil;
 import fun.lewisdev.deluxehub.utility.UpdateChecker;
 import org.bstats.bukkit.MetricsLite;
 import org.bukkit.Bukkit;
@@ -25,12 +24,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.logging.Level;
 
 public class DeluxeHubPlugin extends JavaPlugin {
 
-    private static final int BSTATS_ID = 3151;
+    private static final int BSTATS_ID = 26336;
 
     private ConfigManager configManager;
     private ActionManager actionManager;
@@ -40,73 +39,82 @@ public class DeluxeHubPlugin extends JavaPlugin {
     private ModuleManager moduleManager;
     private InventoryManager inventoryManager;
 
+    @Override
     public void onEnable() {
         long start = System.currentTimeMillis();
 
-        getLogger().log(Level.INFO, " _   _            _          _    _ ");
-        getLogger().log(Level.INFO, "| \\ |_ |  | | \\/ |_ |_| | | |_)   _)");
-        getLogger().log(Level.INFO, "|_/ |_ |_ |_| /\\ |_ | | |_| |_)   _)");
-        getLogger().log(Level.INFO, "");
-        getLogger().log(Level.INFO, "Version: " + getDescription().getVersion());
-        getLogger().log(Level.INFO, "Author: ItsLewizzz");
-        getLogger().log(Level.INFO, "");
+        getLogger().info(" _   _            _          _    _ ");
+        getLogger().info("| \\ |_ |  | | \\/ |_ |_| | | |_)   _)");
+        getLogger().info("|_/ |_ |_ |_| /\\ |_ | | |_| |_)   _)");
+        getLogger().info("");
+        getLogger().info("Version: " + getDescription().getVersion());
+        getLogger().info("Author: ItsLewizzz");
+        getLogger().info("");
 
-        // Check if using Spigot
-        try {
-            Class.forName("org.spigotmc.SpigotConfig");
-        } catch (ClassNotFoundException ex) {
+        // Ensure we're running on Spigot
+        if (!isSpigotEnvironment()) {
             getLogger().severe("============= SPIGOT NOT DETECTED =============");
-            getLogger().severe("DeluxeHub requires Spigot to run, you can download");
-            getLogger().severe("Spigot here: https://www.spigotmc.org/wiki/spigot-installation/.");
-            getLogger().severe("The plugin will now disable.");
+            getLogger().severe("DeluxeHub requires Spigot to run.");
+            getLogger().severe("Download it here: https://www.spigotmc.org/wiki/spigot-installation/");
+            getLogger().severe("Plugin will now disable.");
             getLogger().severe("============= SPIGOT NOT DETECTED =============");
-            getPluginLoader().disablePlugin(this);
+            getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
         MinecraftVersion.disableUpdateCheck();
 
-        // Enable bStats metrics
+        // Metrics
         new MetricsLite(this, BSTATS_ID);
 
-        // Check plugin hooks
+        // Hooks and config
         hooksManager = new HooksManager(this);
 
-        // Load config files
         configManager = new ConfigManager();
         configManager.loadFiles(this);
 
-        // If there were any configuration errors we should not continue
         if (!getServer().getPluginManager().isPluginEnabled(this)) return;
 
-        // Command manager
+        // Core managers
         commandManager = new CommandManager(this);
         commandManager.reload();
 
-        // Cooldown manager
         cooldownManager = new CooldownManager();
 
-        // Inventory (GUI) manager
         inventoryManager = new InventoryManager();
-        if (!hooksManager.isHookEnabled("HEAD_DATABASE")) inventoryManager.onEnable(this);
+        inventoryManager.onEnable(this);
 
-        // Core plugin modules
+        // Fallback inventory loading if HEAD_DATABASE is not enabled
+        if (!hooksManager.isHookEnabled("HEAD_DATABASE")) {
+            inventoryManager.onEnable(this);
+        }
+
         moduleManager = new ModuleManager();
         moduleManager.loadModules(this);
 
-        // Action system
         actionManager = new ActionManager(this);
 
-        // Load update checker (if enabled)
-        if (getConfigManager().getFile(ConfigType.SETTINGS).getConfig().getBoolean("update-check"))
+        // Optional update check
+        if (getConfigManager().getFile(ConfigType.SETTINGS).getConfig().getBoolean("update-check")) {
             new UpdateChecker(this).checkForUpdate();
+        }
 
-        // Register BungeeCord channels
+        // BungeeCord channel registration
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
-        getLogger().log(Level.INFO, "");
-        getLogger().log(Level.INFO, "Successfully loaded in " + (System.currentTimeMillis() - start) + "ms");
+        getLogger().info("");
+        getLogger().info("Successfully loaded in " + (System.currentTimeMillis() - start) + "ms");
     }
+
+    private boolean isSpigotEnvironment() {
+        try {
+            Class.forName("org.spigotmc.SpigotConfig");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
 
     public void onDisable() {
         Bukkit.getScheduler().cancelTasks(this);
@@ -131,7 +139,7 @@ public class DeluxeHubPlugin extends JavaPlugin {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command cmd, String commandLabel, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.@NotNull Command cmd, @NotNull String commandLabel, String[] args) {
         try {
             getCommandManager().execute(cmd.getName(), args, sender);
         } catch (CommandPermissionsException e) {

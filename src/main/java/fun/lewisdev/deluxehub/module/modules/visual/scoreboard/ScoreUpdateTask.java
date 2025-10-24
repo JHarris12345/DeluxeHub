@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public class ScoreUpdateTask implements Runnable {
 
-    private ScoreboardManager scoreboardManager;
+    private final ScoreboardManager scoreboardManager;
 
     public ScoreUpdateTask(ScoreboardManager scoreboardManager) {
         this.scoreboardManager = scoreboardManager;

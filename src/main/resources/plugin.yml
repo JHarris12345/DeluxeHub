@@ -1,12 +1,11 @@
-name: ${project.name}
+name: 'DeluxeHub'
 author: ItsLewizzz
-version: ${project.version}
-description: ${project.description}
-website: ${project.url}
-api-version: 1.13
+version: '${version}'
+description: "The ultimate all in one hub solution."
+api-version: 1.19
 main: fun.lewisdev.deluxehub.DeluxeHubPlugin
 loadbefore: [Essentials]
-softdepend: [PlaceholderAPI, HeadDatabase, Multiverse-Core]
+softdepend: [PlaceholderAPI, Multiverse-Core, MythicDungeons]
 permissions:
   deluxehub.*:
     description: Gives access to all DeluxeHub permissions

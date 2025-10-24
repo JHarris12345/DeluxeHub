@@ -16,10 +16,10 @@ import java.util.UUID;
 
 public abstract class Module implements Listener {
 
-    private DeluxeHubPlugin plugin;
-    private ModuleType moduleType;
+    private final DeluxeHubPlugin plugin;
+    private final ModuleType moduleType;
     private List<String> disabledWorlds;
-    private CooldownManager cooldownManager;
+    private final CooldownManager cooldownManager;
 
     public Module(DeluxeHubPlugin plugin, ModuleType type) {
         this.plugin = plugin;

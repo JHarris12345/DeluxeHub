@@ -1,60 +1,10 @@
 package fun.lewisdev.deluxehub.utility;
 
-import fun.lewisdev.deluxehub.utility.color.IridiumColorAPI;
-import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Color;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class TextUtil {
-
-    private static final int CENTER_PX = 154;
-
-    public static String color(final String string) {
-        return IridiumColorAPI.process(string);
-    }
-
-    public static String getCenteredMessage(String message) {
-        if (message == null || message.equals("")) return "";
-
-        message = color(message).replace("<center>", "").replace("</center>", "");
-
-        int messagePxSize = 0;
-        boolean previousCode = false;
-        boolean isBold = false;
-
-        for (char c : message.toCharArray()) {
-            if (c == '�') {
-                previousCode = true;
-
-            } else if (previousCode) {
-                previousCode = false;
-                if (c == 'l' || c == 'L') {
-                    isBold = true;
-                } else isBold = false;
-
-            } else {
-                DefaultFontInfo dFI = DefaultFontInfo.getDefaultFontInfo(c);
-                messagePxSize += isBold ? dFI.getBoldLength() : dFI.getLength();
-                messagePxSize++;
-            }
-        }
-
-        int halvedMessageSize = messagePxSize / 2;
-        int toCompensate = CENTER_PX - halvedMessageSize;
-        int spaceLength = DefaultFontInfo.SPACE.getLength() + 1;
-        int compensated = 0;
-        StringBuilder sb = new StringBuilder();
-        while (compensated < toCompensate) {
-            sb.append(" ");
-            compensated += spaceLength;
-        }
-
-        return sb.toString() + message;
-
-    }
 
     public static String fromList(List<?> list) {
         if (list == null || list.isEmpty()) return null;
@@ -116,5 +66,6 @@ public class TextUtil {
                 return null;
         }
     }
+
 
 }

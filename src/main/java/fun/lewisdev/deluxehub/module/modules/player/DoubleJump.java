@@ -8,15 +8,12 @@ import fun.lewisdev.deluxehub.cooldown.CooldownType;
 import fun.lewisdev.deluxehub.module.Module;
 import fun.lewisdev.deluxehub.module.ModuleType;
 import org.bukkit.GameMode;
-import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerToggleFlightEvent;
-import org.bukkit.permissions.Permission;
-import org.bukkit.permissions.PermissionDefault;
 
 import java.util.List;
 import java.util.UUID;
@@ -50,33 +47,37 @@ public class DoubleJump extends Module {
 
     @EventHandler
     public void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
-
         Player player = event.getPlayer();
 
-        // Perform checks
-        if (player.hasPermission(new Permission(Permissions.DOUBLE_JUMP_BYPASS.getPermission(), PermissionDefault.FALSE))) return;
-        else if (inDisabledWorld(player.getLocation())) return;
-        else if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
-        else if (!event.isFlying()) return;
-        else if (player.getWorld().getBlockAt(player.getLocation().subtract(0, 2, 0)).getType() == Material.AIR) {
+        // Basic checks
+        if (player.hasPermission(Permissions.DOUBLE_JUMP_BYPASS.getPermission())) return;
+        if (inDisabledWorld(player.getLocation())) return;
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
+        if (!event.isFlying()) return;
+
+        // Check if player is on solid ground (more reliable than checking for AIR)
+        if (!player.getLocation().subtract(0, 1, 0).getBlock().getType().isSolid()) {
             event.setCancelled(true);
             return;
         }
 
-        // All pre-checks passed, now handle double jump
+        // Cancel flight and handle double jump
         event.setCancelled(true);
 
-        // Check for cooldown
         UUID uuid = player.getUniqueId();
         if (!tryCooldown(uuid, CooldownType.DOUBLE_JUMP, cooldownDelay)) {
             Messages.DOUBLE_JUMP_COOLDOWN.send(player, "%time%", getCooldown(uuid, CooldownType.DOUBLE_JUMP));
             return;
         }
 
-        // Execute double jump
+        // Perform the double jump
         player.setVelocity(player.getLocation().getDirection().multiply(launch).setY(launchY));
         executeActions(player, actions);
+
+        // Optional: disable flight until they land again
+        player.setAllowFlight(false);
     }
+
 
     @EventHandler
     public void onWorldChange(PlayerChangedWorldEvent event) {

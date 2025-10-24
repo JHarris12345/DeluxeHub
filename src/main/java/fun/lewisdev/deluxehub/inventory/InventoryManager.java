@@ -7,53 +7,34 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 import java.io.*;
-import java.util.HashMap;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class InventoryManager {
 
     private DeluxeHubPlugin plugin;
-
-    private Map<String, AbstractInventory> inventories;
+    private final Map<String, AbstractInventory> inventories;
 
     public InventoryManager() {
-        inventories = new HashMap<>();
+        inventories = new ConcurrentHashMap<>();
     }
 
     public void onEnable(DeluxeHubPlugin plugin) {
         this.plugin = plugin;
-
         loadCustomMenus();
-
         inventories.values().forEach(AbstractInventory::onEnable);
-
         plugin.getServer().getPluginManager().registerEvents(new InventoryListener(), plugin);
     }
 
     private void loadCustomMenus() {
-
-        File directory = new File(plugin.getDataFolder().getAbsolutePath() + File.separator + "menus");
-
-        if (!directory.exists()) {
-            directory.mkdir();
-            File file = new File(plugin.getDataFolder().getAbsolutePath() + File.separator + "menus", "serverselector.yml");
-            try (final InputStream inputStream = this.plugin.getResource("serverselector.yml")) {
-                file.createNewFile();
-                byte[] buffer = new byte[inputStream.available()];
-                inputStream.read(buffer);
-
-                final OutputStream outputStream = new FileOutputStream(file);
-                outputStream.write(buffer);
-                outputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
-        }
+        File directory = new File(plugin.getDataFolder(), "menus");
+        createMenusDirectoryIfNeeded(directory);
 
         // Load all menu files
-        File[] yamlFiles = new File(plugin.getDataFolder().getAbsolutePath() + File.separator + "menus").listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
+        File[] yamlFiles = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
         if (yamlFiles == null) return;
 
         for (File file : yamlFiles) {
@@ -63,17 +44,32 @@ public class InventoryManager {
                 continue;
             }
 
-            CustomGUI customGUI;
             try {
-                customGUI = new CustomGUI(plugin, YamlConfiguration.loadConfiguration(file));
+                CustomGUI customGUI = new CustomGUI(plugin, YamlConfiguration.loadConfiguration(file));
+                inventories.put(name, customGUI);
+                plugin.getLogger().info("Loaded custom menu '" + name + "'.");
             } catch (Exception e) {
                 plugin.getLogger().severe("Could not load file '" + name + "' (YAML error).");
                 e.printStackTrace();
-                continue;
             }
+        }
+    }
 
-            inventories.put(name, customGUI);
-            plugin.getLogger().info("Loaded custom menu '" + name + "'.");
+    private void createMenusDirectoryIfNeeded(File directory) {
+        if (!directory.exists()) {
+            directory.mkdir();
+            File file = new File(directory, "serverselector.yml");
+            if (!file.exists()) {
+                try (InputStream inputStream = this.plugin.getResource("serverselector.yml")) {
+                    if (inputStream != null) {
+                        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        plugin.getLogger().warning("Resource 'serverselector.yml' not found.");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -85,16 +81,18 @@ public class InventoryManager {
         return inventories;
     }
 
-    public AbstractInventory getInventory(String key) {
-        return inventories.get(key);
+    public Optional<AbstractInventory> getInventory(String key) {
+        return Optional.ofNullable(inventories.get(key));
     }
 
     public void onDisable() {
         inventories.values().forEach(abstractInventory -> {
-            for (UUID uuid : abstractInventory.getOpenInventories()) {
+            abstractInventory.getOpenInventories().forEach(uuid -> {
                 Player player = Bukkit.getPlayer(uuid);
-                if (player != null) player.closeInventory();
-            }
+                if (player != null) {
+                    player.closeInventory();
+                }
+            });
             abstractInventory.getOpenInventories().clear();
         });
         inventories.clear();
