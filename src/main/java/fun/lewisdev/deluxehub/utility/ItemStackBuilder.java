@@ -27,7 +27,6 @@ public class ItemStackBuilder {
 
     private final ItemStack ITEM_STACK;
 
-    private static final DeluxeHubPlugin PLUGIN = JavaPlugin.getPlugin(DeluxeHubPlugin.class);
     private static final Multimap<Attribute, AttributeModifier> EMPTY_ATTRIBUTES_MAP =
             MultimapBuilder.hashKeys().hashSetValues().build();
 
