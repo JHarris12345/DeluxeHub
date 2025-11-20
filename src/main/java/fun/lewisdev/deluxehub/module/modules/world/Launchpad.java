@@ -33,8 +33,23 @@ public class Launchpad extends Module {
         launch = config.getDouble("launchpad.launch_power", 1.3);
         launchY = config.getDouble("launchpad.launch_power_y", 1.2);
         actions = config.getStringList("launchpad.actions");
-        topBlock = XMaterial.matchXMaterial(config.getString("launchpad.top_block")).get().parseMaterial();
-        bottomBlock = XMaterial.matchXMaterial(config.getString("launchpad.bottom_block")).get().parseMaterial();
+        boolean failed = true;
+
+        if (XMaterial.matchXMaterial(config.getString("launchpad.top_block")).isPresent()) {
+            topBlock = XMaterial.matchXMaterial(config.getString("launchpad.top_block")).get().get();
+            failed = false;
+        }
+
+        if (XMaterial.matchXMaterial(config.getString("launchpad.bottom_block")).isPresent()) {
+            bottomBlock = XMaterial.matchXMaterial(config.getString("launchpad.bottom_block")).get().get();
+            failed = false;
+        }
+
+        if (failed) {
+            topBlock = XMaterial.STONE_PRESSURE_PLATE.get();
+            bottomBlock = XMaterial.REDSTONE_BLOCK.get();
+            getPlugin().getLogger().warning("Invalid launchpad block(s) in the config.yml, using default values");
+        }
 
         if (launch > 4.0) launch = 4.0;
         if (launchY > 4.0) launchY = 4.0;

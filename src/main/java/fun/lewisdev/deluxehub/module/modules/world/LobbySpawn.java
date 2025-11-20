@@ -17,9 +17,12 @@ public class LobbySpawn extends Module {
 
     private boolean spawnJoin;
     private Location location = null;
+    private final DeluxeHubPlugin plugin;
 
     public LobbySpawn(DeluxeHubPlugin plugin) {
         super(plugin, ModuleType.LOBBY);
+
+        this.plugin = plugin;
     }
 
     @Override
@@ -33,7 +36,7 @@ public class LobbySpawn extends Module {
 
     @Override
     public void onDisable() {
-        getConfig(ConfigType.DATA).set("spawn", location);
+        plugin.getConfigManager().saveFiles();
     }
 
     public Location getLocation() {

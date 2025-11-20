@@ -1,5 +1,6 @@
 package fun.lewisdev.deluxehub.module.modules.visual.scoreboard;
 
+import com.cryptomorin.xseries.reflection.XReflection;
 import fun.lewisdev.deluxehub.utility.PlaceholderUtil;
 import net.zithium.library.utils.ColorUtil;
 import org.bukkit.Bukkit;
@@ -37,7 +38,13 @@ public class ScoreHelper {
 
     public void setTitle(String title) {
         title = setPlaceholders(title);
-        objective.setDisplayName(title.length() > 32 ? title.substring(0, 32) : title);
+
+        if (XReflection.supports(13)) {
+            objective.setDisplayName(title.length() > 256 ? title.substring(0, 256) : title);
+        } else {
+            objective.setDisplayName(title.length() > 32 ? title.substring(0, 32) : title);
+        }
+
     }
 
     public void setSlot(int slot, String text) {
@@ -89,14 +96,26 @@ public class ScoreHelper {
     }
 
     private String getFirstSplit(String s) {
+        if (XReflection.supports(13)) {
+            return s.length() > 128 ? s.substring(0, 128) : s;
+        }
         return s.length() > 16 ? s.substring(0, 16) : s;
     }
 
     private String getSecondSplit(String s) {
+        if (XReflection.supports(13)) {
+            if (s.length() > 256) {
+                s = s.substring(0, 256);
+            }
+            return s.length() > 128 ? s.substring(128) : "";
+        }
+
         if (s.length() > 32) {
             s = s.substring(0, 32);
         }
+
         return s.length() > 16 ? s.substring(16) : "";
     }
+
 
 }
