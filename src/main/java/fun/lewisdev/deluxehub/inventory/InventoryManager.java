@@ -25,7 +25,6 @@ public class InventoryManager {
     public void onEnable(DeluxeHubPlugin plugin) {
         this.plugin = plugin;
         loadCustomMenus();
-        inventories.values().forEach(AbstractInventory::onEnable);
         plugin.getServer().getPluginManager().registerEvents(new InventoryListener(), plugin);
     }
 
@@ -47,6 +46,7 @@ public class InventoryManager {
             try {
                 CustomGUI customGUI = new CustomGUI(plugin, YamlConfiguration.loadConfiguration(file));
                 inventories.put(name, customGUI);
+                customGUI.onEnable();
                 plugin.getLogger().info("Loaded custom menu '" + name + "'.");
             } catch (Exception e) {
                 plugin.getLogger().severe("Could not load file '" + name + "' (YAML error).");
