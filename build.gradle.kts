@@ -5,7 +5,7 @@ plugins {
 
 
 group = "fun.lewisdev"
-version = "3.6.6"
+version = "3.6.7"
 description = "DeluxeHub"
 
 repositories {

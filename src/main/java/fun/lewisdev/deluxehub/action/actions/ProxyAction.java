@@ -6,20 +6,14 @@ import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.action.Action;
 import org.bukkit.entity.Player;
 
-@Deprecated(forRemoval = true)
-/**
- * Replaced with {@link ProxyAction}
- */
-public class BungeeAction implements Action {
-
+public class ProxyAction implements Action {
     @Override
     public String getIdentifier() {
-        return "BUNGEE";
+        return "PROXY";
     }
 
     @Override
     public void execute(DeluxeHubPlugin plugin, Player player, String data) {
-        plugin.getLogger().warning("The [BUNGEE] action is deprecated! Please use [PROXY] instead.");
         ByteArrayDataOutput out = ByteStreams.newDataOutput();
         out.writeUTF("ConnectOther");
         out.writeUTF(player.getName());

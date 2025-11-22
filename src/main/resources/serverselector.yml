@@ -57,7 +57,7 @@ items:
     actions:
       - '[CLOSE]'
       - '[MESSAGE] &7Sending you to: &eFactions'
-      - '[BUNGEE] factions'
+      - '[PROXY] factions'
       # For multi-world servers using Multiverse-Core, use the action:
       # - '[CONSOLE] mvtp %player% world'
   survival:
@@ -72,4 +72,4 @@ items:
     actions:
       - '[CLOSE]'
       - '[MESSAGE] &7Sending you to: &eSurvival'
-      - '[BUNGEE] survival'
+      - '[PROXY] survival'

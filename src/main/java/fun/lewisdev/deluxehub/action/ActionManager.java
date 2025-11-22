@@ -35,7 +35,8 @@ public class ActionManager {
                 new CloseInventoryAction(),
                 new ActionbarAction(),
                 new TitleAction(),
-                new MenuAction()
+                new MenuAction(),
+                new ProxyAction()
         );
     }
 

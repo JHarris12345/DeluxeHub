@@ -32,6 +32,7 @@ public class InventoryListener implements Listener {
                     clickAction.execute(player);
                 }
             }
+            
         }
     }
 
