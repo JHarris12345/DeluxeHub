@@ -84,11 +84,6 @@ public class DeluxeHubPlugin extends JavaPlugin {
         inventoryManager = new InventoryManager();
         inventoryManager.onEnable(this);
 
-        // Fallback inventory loading if HEAD_DATABASE is not enabled
-        if (!hooksManager.isHookEnabled("HEAD_DATABASE")) {
-            inventoryManager.onEnable(this);
-        }
-
         moduleManager = new ModuleManager();
         moduleManager.loadModules(this);
 
