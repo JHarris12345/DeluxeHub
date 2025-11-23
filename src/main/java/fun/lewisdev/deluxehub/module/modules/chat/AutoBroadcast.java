@@ -1,6 +1,8 @@
 package fun.lewisdev.deluxehub.module.modules.chat;
 
 import com.cryptomorin.xseries.XSound;
+import com.tcoded.folialib.impl.PlatformScheduler;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.config.ConfigType;
 import fun.lewisdev.deluxehub.module.Module;
@@ -17,8 +19,9 @@ import java.util.Map;
 
 public class AutoBroadcast extends Module implements Runnable {
 
+    private final PlatformScheduler scheduler = DeluxeHubPlugin.scheduler();
     private Map<Integer, List<String>> broadcasts;
-    private int broadcastTask = 0;
+    private WrappedTask broadcastTask = null;
     private int count = 0;
     private int size = 0;
     private int requiredPlayers = 0;
@@ -51,31 +54,38 @@ public class AutoBroadcast extends Module implements Runnable {
         requiredPlayers = config.getInt("announcements.required_players", 0);
 
         size = broadcasts.size();
-        if (size > 0)
-            broadcastTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), this, 60L, config.getInt("announcements.delay") * 20);
+        if (size > 0) {
+            broadcastTask = scheduler.runTimer(this, 60L, config.getInt("announcements.delay") * 20L);
+        }
     }
 
     @Override
     public void onDisable() {
-        Bukkit.getScheduler().cancelTask(broadcastTask);
+        if (broadcastTask != null) {
+            broadcastTask.cancel();
+        }
     }
 
     @Override
     public void run() {
-        if (count == size) count = 0;
+        if (count == size) {
+            count = 0;
+        }
 
         if (count < size && Bukkit.getOnlinePlayers().size() >= requiredPlayers) {
             for (Player player : Bukkit.getOnlinePlayers()) {
-                if (inDisabledWorld(player.getLocation())) continue;
+                if (inDisabledWorld(player.getLocation())) {
+                    continue;
+                }
 
-                broadcasts.get(count).forEach(message -> {
-                    player.sendMessage(ColorUtil.color(message));
-                });
+                broadcasts.get(count).forEach(message -> player.sendMessage(ColorUtil.color(message)));
 
-                if (sound != null) player.playSound(player.getLocation(), sound, (float) volume, (float) pitch);
+                if (sound != null) {
+                    player.playSound(player.getLocation(), sound, (float) volume, (float) pitch);
+                }
             }
+
             count++;
         }
-
     }
 }

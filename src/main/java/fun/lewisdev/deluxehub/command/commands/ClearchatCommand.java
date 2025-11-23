@@ -46,8 +46,8 @@ public class ClearchatCommand {
             for (int i = 0; i < 100; i++) {
                 player.sendMessage("");
             }
+
             Messages.CLEARCHAT_PLAYER.send(sender, "%player%", sender.getName());
         }
     }
 }
-

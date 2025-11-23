@@ -1,5 +1,8 @@
 package fun.lewisdev.deluxehub.module.modules.hologram;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
+import fun.lewisdev.deluxehub.DeluxeHubPlugin;
+import fun.lewisdev.deluxehub.utility.TeleportUtil;
 import fun.lewisdev.deluxehub.utility.reflection.ArmorStandName;
 import net.zithium.library.utils.ColorUtil;
 import org.bukkit.Location;
@@ -7,57 +10,90 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Hologram {
 
-    private List<ArmorStand> stands;
-    private Location location;
-    private String name;
+    private static final double LINE_HEIGHT = 0.25;
 
-    public Hologram(String name, Location location) {
+    private final PlatformScheduler scheduler;
+    private final DeluxeHubPlugin plugin;
+    private final List<ArmorStand> stands;
+    private final AtomicInteger lineCounter;
+    private Location location;
+    private final String name;
+
+    public Hologram(DeluxeHubPlugin plugin, String name, Location location) {
+        this.scheduler = DeluxeHubPlugin.scheduler();
+        this.plugin = plugin;
         this.name = name;
         this.location = location;
-        stands = new ArrayList<>();
+        this.stands = new CopyOnWriteArrayList<>();
+        this.lineCounter = new AtomicInteger(0);
     }
 
     public Hologram setLines(List<String> lines) {
-        remove();
-        for (String s : lines) addLine(s);
-        return this;
-    }
+        List<ArmorStand> oldStands = new CopyOnWriteArrayList<>(stands);
+        stands.clear();
+        lineCounter.set(0);
 
-    public Hologram addLines(List<String> lines) {
-        for (String s : lines) addLine(s);
+        for (ArmorStand stand : oldStands) {
+            scheduler.runAtEntity(stand, task -> stand.remove());
+        }
+
+        for (String s : lines) {
+            addLine(s);
+        }
+
         return this;
     }
 
     public Hologram addLine(String text) {
-        ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(location.clone().subtract(0, getHeight(), 0), EntityType.ARMOR_STAND);
-        stand.setVisible(false);
-        stand.setGravity(false);
-        stand.setCustomNameVisible(true);
-        stand.setCustomName(ColorUtil.color(text).trim());
-        stand.setCanPickupItems(false);
-        stands.add(stand);
+        final int currentIndex = lineCounter.getAndIncrement();
+        final double height = currentIndex * LINE_HEIGHT;
+
+        scheduler.runAtLocation(location, task -> {
+            ArmorStand stand = (ArmorStand) location.getWorld().spawnEntity(
+                location.clone().subtract(0, height, 0),
+                EntityType.ARMOR_STAND);
+            stand.setVisible(false);
+            stand.setGravity(false);
+            stand.setCustomNameVisible(true);
+            stand.setCustomName(ColorUtil.color(text).trim());
+            stand.setCanPickupItems(false);
+            stands.add(stand);
+        });
+
         return this;
     }
 
     public Hologram setLine(int line, String text) {
+        if (line < 1 || line > stands.size()) {
+            return this;
+        }
+
         ArmorStand stand = stands.get(line - 1);
-        stand.setCustomName(ColorUtil.color(text).trim());
+        scheduler.runAtEntity(stand, task -> stand.setCustomName(ColorUtil.color(text).trim()));
         return this;
     }
 
     public Hologram removeLine(int line) {
+        if (line < 1 || line > stands.size()) {
+            return this;
+        }
+
         ArmorStand stand = stands.get(line - 1);
-        stand.remove();
+        int index = line - 1;
+        scheduler.runAtEntity(stand, task -> {
+            stand.remove();
+            stands.remove(index);
+            lineCounter.decrementAndGet();
+            refreshLines(index);
+        });
 
-        stands.remove(line - 1);
-
-        if (!refreshLines(line - 1)) return null;
         return this;
     }
 
@@ -66,11 +102,17 @@ public class Hologram {
 
         int count = 0;
         for (ArmorStand entry : stands) {
-            if (count >= line) standsTemp.add(entry);
+            if (count >= line) {
+                standsTemp.add(entry);
+            }
+
             count++;
         }
 
-        for (ArmorStand stand : standsTemp) stand.teleport(stand.getLocation().add(0, 0.25, 0));
+        for (ArmorStand stand : standsTemp) {
+            Location newLocation = stand.getLocation().add(0, LINE_HEIGHT, 0);
+            TeleportUtil.teleportCompat(stand, newLocation);
+        }
 
         return count >= 1;
     }
@@ -86,11 +128,14 @@ public class Hologram {
     }
 
     public void remove() {
-        for (Iterator<ArmorStand> it = stands.iterator(); it.hasNext(); ) {
-            ArmorStand stand = it.next();
-            stand.remove();
+        if (plugin.isEnabled()) {
+            for (ArmorStand stand : stands) {
+                scheduler.runAtEntity(stand, task -> stand.remove());
+            }
         }
+
         stands.clear();
+        lineCounter.set(0);
     }
 
     public Location getLocation() {
@@ -104,10 +149,4 @@ public class Hologram {
     public String getName() {
         return name;
     }
-
-    private double getHeight() {
-        return stands.size() * 0.25;
-    }
-
-
 }

@@ -32,7 +32,9 @@ public class CustomCommands extends Module {
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
 
         Player player = event.getPlayer();
-        if (inDisabledWorld(player.getLocation())) return;
+        if (inDisabledWorld(player.getLocation())) {
+            return;
+        }
 
         String command = event.getMessage().toLowerCase().replace("/", "");
 
@@ -43,11 +45,10 @@ public class CustomCommands extends Module {
                     event.setCancelled(true);
                     return;
                 }
+
                 event.setCancelled(true);
                 getPlugin().getActionManager().executeActions(player, customCommand.getActions());
             }
         }
-
     }
-
 }

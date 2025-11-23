@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public class TablistUpdateTask implements Runnable {
 
-    private TablistManager tablistManager;
+    private final TablistManager tablistManager;
 
     public TablistUpdateTask(TablistManager tablistManager) {
         this.tablistManager = tablistManager;
@@ -16,9 +16,11 @@ public class TablistUpdateTask implements Runnable {
     public void run() {
         List<UUID> toRemove = new ArrayList<>();
         tablistManager.getPlayers().forEach(uuid -> {
-            if (!tablistManager.updateTablist(uuid)) toRemove.add(uuid);
+            if (!tablistManager.updateTablist(uuid)) {
+                toRemove.add(uuid);
+            }
         });
+
         tablistManager.getPlayers().removeAll(toRemove);
     }
-
 }

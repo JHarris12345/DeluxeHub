@@ -83,7 +83,7 @@ public enum Messages {
         String message;
         if (value == null) {
             message = "DeluxeHub: message not found (" + this.path + ")";
-        }else {
+        } else {
             message = value instanceof List ? TextUtil.fromList((List<?>) value) : value.toString();
         }
 
@@ -94,7 +94,10 @@ public enum Messages {
 
     private String replace(String message, Object... replacements) {
         for (int i = 0; i < replacements.length; i += 2) {
-            if (i + 1 >= replacements.length) break;
+            if (i + 1 >= replacements.length) {
+                break;
+            }
+
             message = message.replace(String.valueOf(replacements[i]), String.valueOf(replacements[i + 1]));
         }
 
@@ -105,5 +108,4 @@ public enum Messages {
     public String getPath() {
         return this.path;
     }
-
 }

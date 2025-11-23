@@ -9,6 +9,8 @@ import net.zithium.library.utils.ColorUtil;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.Inventory;
 
+import java.util.logging.Level;
+
 public class CustomGUI extends AbstractInventory {
 
     private InventoryBuilder inventory;
@@ -52,15 +54,12 @@ public class CustomGUI extends AbstractInventory {
                         }
                     } else inventoryBuilder.setItem(slot, inventoryItem);
                 }
-
             } catch (Exception e) {
-                e.printStackTrace();
-                getPlugin().getLogger().warning("There was an error loading GUI item ID '" + entry + "', skipping..");
+                getPlugin().getLogger().log(Level.WARNING, "Failed to load GUI item ID '" + entry + "', skipping", e);
             }
         }
 
         inventory = inventoryBuilder;
-
     }
 
     @Override

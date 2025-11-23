@@ -32,12 +32,11 @@ public class SetLobbyCommand {
             return;
         }
 
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player player)) {
             sender.sendMessage("Console cannot set the spawn location.");
             return;
         }
 
-        Player player = (Player) sender;
         if (plugin.getModuleManager().getDisabledWorlds().contains(player.getWorld().getName())) {
             sender.sendMessage(ColorUtil.color("&cYou cannot set the lobby location in a disabled world."));
             return;
@@ -47,7 +46,5 @@ public class SetLobbyCommand {
         lobbyModule.setLocation(player.getLocation());
         plugin.getConfigManager().saveFiles(); // Save config files.
         Messages.SET_LOBBY.send(sender);
-
     }
-
 }

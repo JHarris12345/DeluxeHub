@@ -1,11 +1,14 @@
 package fun.lewisdev.deluxehub.action.actions;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.action.Action;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class ConsoleCommandAction implements Action {
+
+    private final PlatformScheduler scheduler = DeluxeHubPlugin.scheduler();
 
     @Override
     public String getIdentifier() {
@@ -14,6 +17,6 @@ public class ConsoleCommandAction implements Action {
 
     @Override
     public void execute(DeluxeHubPlugin plugin, Player player, String data) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), data);
+        scheduler.runNextTick(task -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), data));
     }
 }

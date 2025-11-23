@@ -10,7 +10,7 @@ import java.util.List;
 
 public class CustomItem extends HotbarItem {
 
-    private List<String> actions;
+    private final List<String> actions;
 
     public CustomItem(HotbarManager hotbarManager, ItemStack item, int slot, String key) {
         super(hotbarManager, item, slot, key);

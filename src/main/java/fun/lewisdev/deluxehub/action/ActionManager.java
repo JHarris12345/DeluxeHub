@@ -54,7 +54,7 @@ public class ActionManager {
                 item = PlaceholderUtil.setPlaceholders(item, player);
 
                 action.execute(plugin, player, item);
-            }else{
+            } else {
                 plugin.getLogger().warning("There was a problem attempting to process action: '" + item + "'");
             }
         });

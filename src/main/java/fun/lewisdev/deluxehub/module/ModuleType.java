@@ -1,7 +1,6 @@
 package fun.lewisdev.deluxehub.module;
 
 public enum ModuleType {
-
     ANTI_WDL,
     CHAT_LOCK,
     CUSTOM_COMMANDS,
@@ -19,5 +18,4 @@ public enum ModuleType {
     HOTBAR_ITEMS,
     PLAYER_LISTENER,
     PLAYER_OFFHAND_LISTENER
-
 }

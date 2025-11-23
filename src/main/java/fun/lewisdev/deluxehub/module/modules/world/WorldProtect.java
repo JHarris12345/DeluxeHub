@@ -10,18 +10,35 @@ import fun.lewisdev.deluxehub.cooldown.CooldownType;
 import fun.lewisdev.deluxehub.module.Module;
 import fun.lewisdev.deluxehub.module.ModuleType;
 import fun.lewisdev.deluxehub.module.modules.hologram.Hologram;
-import org.bukkit.Bukkit;
+import fun.lewisdev.deluxehub.utility.TeleportUtil;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.*;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemFrame;
+import org.bukkit.entity.Painting;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.block.*;
-import org.bukkit.event.entity.*;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.LeavesDecayEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -139,11 +156,18 @@ public class WorldProtect extends Module {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent event) {
-        if (!blockBreak || event.isCancelled()) return;
+        if (!blockBreak || event.isCancelled()) {
+            return;
+        }
 
         Player player = event.getPlayer();
-        if (inDisabledWorld(player.getLocation())) return;
-        if (player.hasPermission(Permissions.EVENT_BLOCK_BREAK.getPermission())) return;
+        if (inDisabledWorld(player.getLocation())) {
+            return;
+        }
+
+        if (player.hasPermission(Permissions.EVENT_BLOCK_BREAK.getPermission())) {
+            return;
+        }
 
         event.setCancelled(true);
 
@@ -154,19 +178,28 @@ public class WorldProtect extends Module {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (!blockPlace || event.isCancelled()) return;
+        if (!blockPlace || event.isCancelled()) {
+            return;
+        }
 
         Player player = event.getPlayer();
-        if (inDisabledWorld(player.getLocation())) return;
+        if (inDisabledWorld(player.getLocation())) {
+            return;
+        }
+
         ItemStack item = event.getItemInHand();
-        if(item.getType() == Material.AIR) return;
+        if (item.getType() == Material.AIR) {
+            return;
+        }
 
         if (new NBTItem(event.getItemInHand()).hasKey("hotbarItem")) {
             event.setCancelled(true);
             return;
         }
 
-        if (player.hasPermission(Permissions.EVENT_BLOCK_PLACE.getPermission())) return;
+        if (player.hasPermission(Permissions.EVENT_BLOCK_PLACE.getPermission())) {
+            return;
+        }
 
         event.setCancelled(true);
 
@@ -177,15 +210,24 @@ public class WorldProtect extends Module {
 
     @EventHandler
     public void onBlockBurn(BlockBurnEvent event) {
-        if (!blockBurn) return;
-        if (inDisabledWorld(event.getBlock().getLocation())) return;
+        if (!blockBurn) {
+            return;
+        }
+
+        if (inDisabledWorld(event.getBlock().getLocation())) {
+            return;
+        }
+
         event.setCancelled(true);
     }
 
     // Prevent destroying of item frame/paintings
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDestroy(HangingBreakByEntityEvent event) {
-        if (!blockBreak || inDisabledWorld(event.getEntity().getLocation())) return;
+        if (!blockBreak || inDisabledWorld(event.getEntity().getLocation())) {
+            return;
+        }
+
         Entity entity = event.getEntity();
         Entity player = event.getRemover();
 
@@ -201,11 +243,16 @@ public class WorldProtect extends Module {
     // Prevent items being rotated in item frame
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityInteract(PlayerInteractEntityEvent event) {
-        if (!blockInteract || inDisabledWorld(event.getRightClicked().getLocation())) return;
+        if (!blockInteract || inDisabledWorld(event.getRightClicked().getLocation())) {
+            return;
+        }
+
         Entity entity = event.getRightClicked();
         Entity player = event.getPlayer();
 
-        if (player.hasPermission(Permissions.EVENT_BLOCK_INTERACT.getPermission())) return;
+        if (player.hasPermission(Permissions.EVENT_BLOCK_INTERACT.getPermission())) {
+            return;
+        }
 
         if (entity instanceof ItemFrame) {
             event.setCancelled(true);
@@ -218,13 +265,18 @@ public class WorldProtect extends Module {
     // Prevent items being taken from item frames
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (!blockInteract || inDisabledWorld(event.getEntity().getLocation())) return;
+        if (!blockInteract || inDisabledWorld(event.getEntity().getLocation())) {
+            return;
+        }
+
         Entity entity = event.getEntity();
         Entity damager = event.getDamager();
 
-        if (entity instanceof ItemFrame && damager instanceof Player) {
-            Player player = (Player) damager;
-            if (player.hasPermission(Permissions.EVENT_BLOCK_INTERACT.getPermission())) return;
+        if (entity instanceof ItemFrame && damager instanceof Player player) {
+            if (player.hasPermission(Permissions.EVENT_BLOCK_INTERACT.getPermission())) {
+                return;
+            }
+
             event.setCancelled(true);
             if (tryCooldown(player.getUniqueId(), CooldownType.BLOCK_INTERACT, 3)) {
                 Messages.EVENT_BLOCK_INTERACT.send(player);
@@ -234,12 +286,19 @@ public class WorldProtect extends Module {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockInteract(PlayerInteractEvent event) {
-        if (!blockInteract || inDisabledWorld(event.getPlayer().getLocation())) return;
+        if (!blockInteract || inDisabledWorld(event.getPlayer().getLocation())) {
+            return;
+        }
 
         Player player = event.getPlayer();
-        if (player.hasPermission(Permissions.EVENT_BLOCK_INTERACT.getPermission())) return;
+        if (player.hasPermission(Permissions.EVENT_BLOCK_INTERACT.getPermission())) {
+            return;
+        }
+
         Block block = event.getClickedBlock();
-        if (block == null) return;
+        if (block == null) {
+            return;
+        }
 
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 
@@ -250,6 +309,7 @@ public class WorldProtect extends Module {
                     if (tryCooldown(player.getUniqueId(), CooldownType.BLOCK_INTERACT, 3)) {
                         Messages.EVENT_BLOCK_INTERACT.send(player);
                     }
+
                     return;
                 }
             }
@@ -260,51 +320,81 @@ public class WorldProtect extends Module {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (!(event.getEntity() instanceof Player)) return;
-        Player player = (Player) event.getEntity();
-        if (inDisabledWorld(player.getLocation())) return;
+        if (!(event.getEntity() instanceof Player player)) {
+            return;
+        }
+
+        if (inDisabledWorld(player.getLocation())) {
+            return;
+        }
 
         EntityDamageEvent.DamageCause cause = event.getCause();
-        if (fallDamage && cause == EntityDamageEvent.DamageCause.FALL) event.setCancelled(true);
-        else if (playerDrowning && cause == EntityDamageEvent.DamageCause.DROWNING) event.setCancelled(true);
-        else if (fireDamage && (cause == EntityDamageEvent.DamageCause.FIRE || cause == EntityDamageEvent.DamageCause.FIRE_TICK || cause == EntityDamageEvent.DamageCause.LAVA)) event.setCancelled(true);
-        else if (voidDeath && cause == EntityDamageEvent.DamageCause.VOID) {
+        if (fallDamage && cause == EntityDamageEvent.DamageCause.FALL) {
+            event.setCancelled(true);
+        } else if (playerDrowning && cause == EntityDamageEvent.DamageCause.DROWNING) {
+            event.setCancelled(true);
+        } else if (fireDamage && (cause == EntityDamageEvent.DamageCause.FIRE || cause == EntityDamageEvent.DamageCause.FIRE_TICK || cause == EntityDamageEvent.DamageCause.LAVA)) {
+            event.setCancelled(true);
+        } else if (voidDeath && cause == EntityDamageEvent.DamageCause.VOID) {
             player.setFallDistance(0.0F);
 
             Location location = ((LobbySpawn) getPlugin().getModuleManager().getModule(ModuleType.LOBBY)).getLocation();
-            if (location == null) return;
+            if (location == null) {
+                return;
+            }
 
-            Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), () -> player.teleport(location), 3L);
+            TeleportUtil.teleportCompatLaterAtEntity(player, location, 3L, null);
             event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onFireSpread(BlockIgniteEvent event) {
-        if (!fireSpread) return;
-        if (inDisabledWorld(event.getBlock().getLocation())) return;
-        if (event.getCause() == BlockIgniteEvent.IgniteCause.SPREAD) event.setCancelled(true);
+        if (!fireSpread) {
+            return;
+        }
+
+        if (inDisabledWorld(event.getBlock().getLocation())) {
+            return;
+        }
+
+        if (event.getCause() == BlockIgniteEvent.IgniteCause.SPREAD) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onFoodChange(FoodLevelChangeEvent event) {
-        if (!hungerLoss) return;
+        if (!hungerLoss) {
+            return;
+        }
 
-        if (!(event.getEntity() instanceof Player)) return;
-        Player player = (Player) event.getEntity();
+        if (!(event.getEntity() instanceof Player player)) {
+            return;
+        }
 
-        if (inDisabledWorld(player.getLocation())) return;
+        if (inDisabledWorld(player.getLocation())) {
+            return;
+        }
+
         event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerDropEvent(PlayerDropItemEvent event) {
-        if (!itemDrop) return;
+        if (!itemDrop) {
+            return;
+        }
 
         Player player = event.getPlayer();
 
-        if (inDisabledWorld(player.getLocation())) return;
-        if (player.hasPermission(Permissions.EVENT_ITEM_DROP.getPermission())) return;
+        if (inDisabledWorld(player.getLocation())) {
+            return;
+        }
+
+        if (player.hasPermission(Permissions.EVENT_ITEM_DROP.getPermission())) {
+            return;
+        }
 
         event.setCancelled(true);
 
@@ -314,12 +404,22 @@ public class WorldProtect extends Module {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlayerPickupEvent(PlayerPickupItemEvent event) {
-        if (!itemPickup) return;
+    public void onEntityPickupItem(EntityPickupItemEvent event) {
+        if (!itemPickup) {
+            return;
+        }
 
-        Player player = event.getPlayer();
-        if (inDisabledWorld(player.getLocation())) return;
-        if (player.hasPermission(Permissions.EVENT_ITEM_PICKUP.getPermission())) return;
+        if (!(event.getEntity() instanceof Player player)) {
+            return;
+        }
+
+        if (inDisabledWorld(player.getLocation())) {
+            return;
+        }
+
+        if (player.hasPermission(Permissions.EVENT_ITEM_PICKUP.getPermission())) {
+            return;
+        }
 
         event.setCancelled(true);
         if (tryCooldown(player.getUniqueId(), CooldownType.ITEM_PICKUP, 3)) {
@@ -329,41 +429,69 @@ public class WorldProtect extends Module {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onLeafDecay(LeavesDecayEvent event) {
-        if (!leafDecay) return;
-        if (inDisabledWorld(event.getBlock().getLocation())) return;
+        if (!leafDecay) {
+            return;
+        }
+
+        if (inDisabledWorld(event.getBlock().getLocation())) {
+            return;
+        }
+
         event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if (!mobSpawning) return;
-        if (inDisabledWorld(event.getEntity().getLocation())) return;
-        if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.CUSTOM) return;
+        if (!mobSpawning) {
+            return;
+        }
+
+        if (inDisabledWorld(event.getEntity().getLocation())) {
+            return;
+        }
+
+        if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.CUSTOM) {
+            return;
+        }
+
         event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWeatherChange(WeatherChangeEvent event) {
-        if (!weatherChange || inDisabledWorld(event.getWorld())) return;
+        if (!weatherChange || inDisabledWorld(event.getWorld())) {
+            return;
+        }
+
         event.setCancelled(event.toWeatherState());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (!deathMessage || inDisabledWorld(event.getEntity().getLocation())) return;
+        if (!deathMessage || inDisabledWorld(event.getEntity().getLocation())) {
+            return;
+        }
+
         event.setDeathMessage(null);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
-        if (!playerPvP) return;
+        if (!playerPvP) {
+            return;
+        }
 
-        if (!(event.getEntity() instanceof Player)) return;
+        if (!(event.getEntity() instanceof Player player)) {
+            return;
+        }
 
-        Player player = (Player) event.getEntity();
-        if (inDisabledWorld(player.getLocation())) return;
+        if (inDisabledWorld(player.getLocation())) {
+            return;
+        }
 
-        if (event.getDamager().hasPermission(Permissions.EVENT_PLAYER_PVP.getPermission())) return;
+        if (event.getDamager().hasPermission(Permissions.EVENT_PLAYER_PVP.getPermission())) {
+            return;
+        }
 
         event.setCancelled(true);
         if (tryCooldown(player.getUniqueId(), CooldownType.PLAYER_PVP, 3)) {

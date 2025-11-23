@@ -6,10 +6,10 @@ import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.action.Action;
 import org.bukkit.entity.Player;
 
-@Deprecated(forRemoval = true)
 /**
  * Replaced with {@link ProxyAction}
  */
+@Deprecated(forRemoval = true)
 public class BungeeAction implements Action {
 
     @Override

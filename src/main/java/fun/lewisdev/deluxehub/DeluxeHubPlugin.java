@@ -5,6 +5,8 @@ import cl.bgmp.minecraft.util.commands.exceptions.CommandPermissionsException;
 import cl.bgmp.minecraft.util.commands.exceptions.CommandUsageException;
 import cl.bgmp.minecraft.util.commands.exceptions.MissingNestedCommandException;
 import cl.bgmp.minecraft.util.commands.exceptions.WrappedCommandException;
+import com.tcoded.folialib.FoliaLib;
+import com.tcoded.folialib.impl.PlatformScheduler;
 import de.tr7zw.changeme.nbtapi.utils.MinecraftVersion;
 import fun.lewisdev.deluxehub.action.ActionManager;
 import fun.lewisdev.deluxehub.command.CommandManager;
@@ -19,17 +21,21 @@ import fun.lewisdev.deluxehub.module.ModuleType;
 import fun.lewisdev.deluxehub.module.modules.hologram.HologramManager;
 import fun.lewisdev.deluxehub.utility.UpdateChecker;
 import org.bstats.bukkit.MetricsLite;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-
 public class DeluxeHubPlugin extends JavaPlugin {
 
+    private static PlatformScheduler scheduler;
+
     private static final int BSTATS_ID = 26336;
+
+    public static PlatformScheduler scheduler() {
+        return scheduler;
+    }
 
     private ConfigManager configManager;
     private ActionManager actionManager;
@@ -64,6 +70,10 @@ public class DeluxeHubPlugin extends JavaPlugin {
 
         MinecraftVersion.disableUpdateCheck();
 
+        // Initialize Folia scheduling (if needed)
+        FoliaLib foliaLib = new FoliaLib(this);
+        scheduler = foliaLib.getScheduler();
+
         // Metrics
         new MetricsLite(this, BSTATS_ID);
 
@@ -73,7 +83,9 @@ public class DeluxeHubPlugin extends JavaPlugin {
         configManager = new ConfigManager();
         configManager.loadFiles(this);
 
-        if (!getServer().getPluginManager().isPluginEnabled(this)) return;
+        if (!getServer().getPluginManager().isPluginEnabled(this)) {
+            return;
+        }
 
         // Core managers
         commandManager = new CommandManager(this);
@@ -110,17 +122,15 @@ public class DeluxeHubPlugin extends JavaPlugin {
         }
     }
 
-
     public void onDisable() {
-        Bukkit.getScheduler().cancelTasks(this);
+        scheduler.cancelAllTasks();
         moduleManager.unloadModules();
         inventoryManager.onDisable();
         configManager.saveFiles();
-
     }
 
     public void reload() {
-        Bukkit.getScheduler().cancelTasks(this);
+        scheduler.cancelAllTasks();
         HandlerList.unregisterAll(this);
 
         configManager.reloadFiles();
@@ -142,18 +152,21 @@ public class DeluxeHubPlugin extends JavaPlugin {
         } catch (MissingNestedCommandException e) {
             sender.sendMessage(ChatColor.RED + e.getUsage());
         } catch (CommandUsageException e) {
-            //sender.sendMessage(ChatColor.RED + e.getMessage());
             sender.sendMessage(ChatColor.RED + "Usage: " + e.getUsage());
         } catch (WrappedCommandException e) {
             if (e.getCause() instanceof NumberFormatException) {
                 sender.sendMessage(ChatColor.RED + "Number expected, string received instead.");
             } else {
                 sender.sendMessage(ChatColor.RED + "An internal error has occurred. See console.");
-                e.printStackTrace();
+                getLogger().severe("An error occurred while executing command: " + e.getMessage());
+                if (e.getCause() != null) {
+                    getLogger().severe("Caused by: " + e.getCause().getMessage());
+                }
             }
         } catch (CommandException e) {
             sender.sendMessage(ChatColor.RED + e.getMessage());
         }
+
         return true;
     }
 

@@ -51,8 +51,13 @@ public class Launchpad extends Module {
             getPlugin().getLogger().warning("Invalid launchpad block(s) in the config.yml, using default values");
         }
 
-        if (launch > 4.0) launch = 4.0;
-        if (launchY > 4.0) launchY = 4.0;
+        if (launch > 4.0) {
+            launch = 4.0;
+        }
+
+        if (launchY > 4.0) {
+            launchY = 4.0;
+        }
     }
 
     @Override
@@ -63,7 +68,9 @@ public class Launchpad extends Module {
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         Location location = player.getLocation();
-        if (inDisabledWorld(location)) return;
+        if (inDisabledWorld(location)) {
+            return;
+        }
 
         // Check for launchpad block
         if (location.getBlock().getType() == topBlock && location.subtract(0, 1, 0).getBlock().getType() == bottomBlock) {
@@ -75,5 +82,4 @@ public class Launchpad extends Module {
             }
         }
     }
-
 }

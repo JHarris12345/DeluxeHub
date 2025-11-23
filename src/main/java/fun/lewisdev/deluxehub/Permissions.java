@@ -45,5 +45,4 @@ public enum Permissions {
     public final String getPermission() {
         return "deluxehub." + this.perm;
     }
-
 }

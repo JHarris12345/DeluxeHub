@@ -24,6 +24,7 @@ import org.bukkit.event.HandlerList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class ModuleManager {
@@ -35,7 +36,9 @@ public class ModuleManager {
     public void loadModules(DeluxeHubPlugin plugin) {
         this.plugin = plugin;
 
-        if (!modules.isEmpty()) unloadModules();
+        if (!modules.isEmpty()) {
+            unloadModules();
+        }
 
         FileConfiguration config = plugin.getConfigManager().getFile(ConfigType.SETTINGS).getConfig();
         disabledWorlds = config.getStringList("disabled-worlds.worlds");
@@ -46,7 +49,6 @@ public class ModuleManager {
                 disabledWorlds.remove(world);
             }
         }
-
 
         registerModule(new AntiWorldDownloader(plugin), "anti_wdl.enabled");
         registerModule(new DoubleJump(plugin), "double_jump.enabled");
@@ -75,7 +77,7 @@ public class ModuleManager {
                 module.setDisabledWorlds(disabledWorlds);
                 module.onEnable();
             } catch (Exception e) {
-                e.printStackTrace();
+                plugin.getLogger().log(Level.SEVERE, "Failed to load module: " + module.getModuleType(), e);
                 plugin.getLogger().severe("============= DELUXEHUB MODULE LOAD ERROR =============");
                 plugin.getLogger().severe("There was an error loading the " + module.getModuleType() + " module");
                 plugin.getLogger().severe("The plugin will now disable..");
@@ -94,10 +96,10 @@ public class ModuleManager {
                 HandlerList.unregisterAll(module);
                 module.onDisable();
             } catch (Exception e) {
-                e.printStackTrace();
-                plugin.getLogger().severe("There was an error unloading the " + module.getModuleType().toString() + " module.");
+                plugin.getLogger().log(Level.SEVERE, "Failed to unload module: " + module.getModuleType(), e);
             }
         }
+
         modules.clear();
     }
 
@@ -111,8 +113,9 @@ public class ModuleManager {
 
     public void registerModule(Module module, String isEnabledPath) {
         DeluxeHubPlugin plugin = module.getPlugin();
-        if (isEnabledPath != null && !plugin.getConfigManager().getFile(ConfigType.SETTINGS).getConfig().getBoolean(isEnabledPath, false))
+        if (isEnabledPath != null && !plugin.getConfigManager().getFile(ConfigType.SETTINGS).getConfig().getBoolean(isEnabledPath, false)) {
             return;
+        }
 
         plugin.getServer().getPluginManager().registerEvents(module, plugin);
         modules.put(module.getModuleType(), module);

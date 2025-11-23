@@ -3,7 +3,6 @@ package fun.lewisdev.deluxehub.utility;
 import com.cryptomorin.xseries.XMaterial;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
-import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import net.zithium.library.items.Base64Util;
 import net.zithium.library.utils.ColorUtil;
 import org.bukkit.Material;
@@ -16,7 +15,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -78,6 +76,7 @@ public class ItemStackBuilder {
                 } catch (IllegalArgumentException ignored) {
                 }
             });
+
             builder.withFlags(flags.toArray(new ItemFlag[0]));
         }
 
@@ -92,7 +91,6 @@ public class ItemStackBuilder {
         ITEM_STACK.setAmount(Optional.ofNullable(amount).orElse(1));
         return this;
     }
-
 
     public ItemStackBuilder withFlags(ItemFlag... flags) {
         ItemMeta meta = ITEM_STACK.getItemMeta();
@@ -130,9 +128,9 @@ public class ItemStackBuilder {
             skullMeta.setOwner(owner);
             ITEM_STACK.setItemMeta(skullMeta);
         }
+
         return this;
     }
-
 
     public ItemStackBuilder withLore(List<String> lore, Player player) {
         final ItemMeta meta = ITEM_STACK.getItemMeta();
@@ -141,6 +139,7 @@ public class ItemStackBuilder {
             s = PlaceholderUtil.setPlaceholders(s, player);
             coloredLore.add(ColorUtil.color(s));
         }
+
         meta.setLore(coloredLore);
         ITEM_STACK.setItemMeta(meta);
         return this;
@@ -152,6 +151,7 @@ public class ItemStackBuilder {
         for (String s : lore) {
             coloredLore.add(ColorUtil.color(s));
         }
+
         meta.setLore(coloredLore);
         ITEM_STACK.setItemMeta(meta);
         return this;
@@ -176,4 +176,3 @@ public class ItemStackBuilder {
         return ITEM_STACK;
     }
 }
-

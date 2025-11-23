@@ -31,7 +31,9 @@ public class CommandManager {
     }
 
     public void reload() {
-        if (commandRegistry != null) commandRegistry.unregisterCommands();
+        if (commandRegistry != null) {
+            commandRegistry.unregisterCommands();
+        }
 
         commands = new BukkitCommandsManager();
         commandRegistry = new CommandsManagerRegistration(plugin, commands);
@@ -53,8 +55,13 @@ public class CommandManager {
     }
 
     public void reloadCustomCommands() {
-        if (!customCommands.isEmpty()) customCommands.clear();
-        if (!config.isSet("custom_commands")) return;
+        if (!customCommands.isEmpty()) {
+            customCommands.clear();
+        }
+
+        if (!config.isSet("custom_commands")) {
+            return;
+        }
 
         for (String entry : config.getConfigurationSection("custom_commands").getKeys(false)) {
 
@@ -72,42 +79,19 @@ public class CommandManager {
         }
     }
 
-
     private void registerCommand(String cmd, String[] aliases) {
         switch (cmd.toUpperCase()) {
-            case "GAMEMODE":
-                commandRegistry.register(GamemodeCommand.class, aliases);
-                break;
-            case "GMS":
-                commandRegistry.register(SurvivalCommand.class, aliases);
-                break;
-            case "GMC":
-                commandRegistry.register(CreativeCommand.class, aliases);
-                break;
-            case "GMA":
-                commandRegistry.register(AdventureCommand.class, aliases);
-                break;
-            case "GMSP":
-                commandRegistry.register(SpectatorCommand.class, aliases);
-                break;
-            case "CLEARCHAT":
-                commandRegistry.register(ClearchatCommand.class, aliases);
-                break;
-            case "FLY":
-                commandRegistry.register(FlyCommand.class, aliases);
-                break;
-            case "LOCKCHAT":
-                commandRegistry.register(LockchatCommand.class, aliases);
-                break;
-            case "SETLOBBY":
-                commandRegistry.register(SetLobbyCommand.class, aliases);
-                break;
-            case "LOBBY":
-                commandRegistry.register(LobbyCommand.class, aliases);
-                break;
-            case "VANISH":
-                commandRegistry.register(VanishCommand.class, aliases);
-                break;
+            case "GAMEMODE" -> commandRegistry.register(GamemodeCommand.class, aliases);
+            case "GMS" -> commandRegistry.register(SurvivalCommand.class, aliases);
+            case "GMC" -> commandRegistry.register(CreativeCommand.class, aliases);
+            case "GMA" -> commandRegistry.register(AdventureCommand.class, aliases);
+            case "GMSP" -> commandRegistry.register(SpectatorCommand.class, aliases);
+            case "CLEARCHAT" -> commandRegistry.register(ClearchatCommand.class, aliases);
+            case "FLY" -> commandRegistry.register(FlyCommand.class, aliases);
+            case "LOCKCHAT" -> commandRegistry.register(LockchatCommand.class, aliases);
+            case "SETLOBBY" -> commandRegistry.register(SetLobbyCommand.class, aliases);
+            case "LOBBY" -> commandRegistry.register(LobbyCommand.class, aliases);
+            case "VANISH" -> commandRegistry.register(VanishCommand.class, aliases);
         }
     }
 

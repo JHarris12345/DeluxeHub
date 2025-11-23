@@ -29,5 +29,4 @@ public class DatabaseHead implements PluginHook, HeadHook, Listener {
     public void onDatabaseLoad(DatabaseLoadEvent event) {
         plugin.getInventoryManager().onEnable(plugin);
     }
-
 }

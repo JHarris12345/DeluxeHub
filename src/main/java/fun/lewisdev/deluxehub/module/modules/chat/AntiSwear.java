@@ -6,9 +6,13 @@ import fun.lewisdev.deluxehub.config.ConfigType;
 import fun.lewisdev.deluxehub.config.Messages;
 import fun.lewisdev.deluxehub.module.Module;
 import fun.lewisdev.deluxehub.module.ModuleType;
+import io.papermc.paper.event.player.AsyncChatEvent;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.List;
@@ -19,6 +23,13 @@ public class AntiSwear extends Module {
 
     public AntiSwear(DeluxeHubPlugin plugin) {
         super(plugin, ModuleType.ANTI_SWEAR);
+
+        try {
+            Class.forName("io.papermc.paper.event.player.AsyncChatEvent", false, plugin.getClass().getClassLoader());
+            plugin.getServer().getPluginManager().registerEvents(new PaperHandler(plugin, this), plugin);
+        } catch (ClassNotFoundException ignored) {
+            plugin.getServer().getPluginManager().registerEvents(new SpigotHandler(plugin, this), plugin);
+        }
     }
 
     @Override
@@ -30,26 +41,54 @@ public class AntiSwear extends Module {
     public void onDisable() {
     }
 
-    @EventHandler
-    public void onPlayerChat(AsyncPlayerChatEvent event) {
-
-        Player player = event.getPlayer();
-        if (player.hasPermission(Permissions.ANTI_SWEAR_BYPASS.getPermission())) return;
-
-        String message = event.getMessage();
+    private void handleSwearCheck(Player player, String message, Runnable cancelAction) {
+        if (player.hasPermission(Permissions.ANTI_SWEAR_BYPASS.getPermission())) {
+            return;
+        }
 
         for (String word : blockedWords) {
             if (message.toLowerCase().contains(word.toLowerCase())) {
-
-                event.setCancelled(true);
+                cancelAction.run();
                 Messages.ANTI_SWEAR_WORD_BLOCKED.send(player);
 
-                Bukkit.getOnlinePlayers().stream().filter(p -> p.hasPermission(Permissions.ANTI_SWEAR_NOTIFY.getPermission())).forEach(p -> {
-                    Messages.ANTI_SWEAR_ADMIN_NOTIFY.send(p,"%player%", player.getName(),"%word%", message);
-                });
-
+                Bukkit.getOnlinePlayers().stream()
+                        .filter(p -> p.hasPermission(Permissions.ANTI_SWEAR_NOTIFY.getPermission()))
+                        .forEach(p -> Messages.ANTI_SWEAR_ADMIN_NOTIFY.send(p, "%player%", player.getName(), "%word%", message));
                 return;
             }
+        }
+    }
+
+    /**
+     * Paper handler using AsyncChatEvent + Adventure.
+     * Only registered when Paper's event exists.
+     */
+    private record PaperHandler(DeluxeHubPlugin plugin, AntiSwear antiSwear) implements Listener {
+
+        @EventHandler(priority = EventPriority.HIGHEST)
+        public void onPlayerChat(AsyncChatEvent event) {
+            final Player player = event.getPlayer();
+            final String message = PlainTextComponentSerializer.plainText()
+                    .serialize(event.message())
+                    .trim();
+
+            antiSwear.handleSwearCheck(player, message, () -> event.setCancelled(true));
+        }
+    }
+
+    /**
+     * Spigot handler using AsyncPlayerChatEvent (deprecated on Paper).
+     * Registered only when Paper's event is absent.
+     */
+    private record SpigotHandler(DeluxeHubPlugin plugin, AntiSwear antiSwear) implements Listener {
+
+        @SuppressWarnings("deprecation")
+        @EventHandler(priority = EventPriority.HIGHEST)
+        public void onPlayerChat(AsyncPlayerChatEvent event) {
+            final Player player = event.getPlayer();
+            final String message = event.getMessage().trim();
+
+            antiSwear.handleSwearCheck(player, message, () -> event.setCancelled(true));
         }
     }
 }

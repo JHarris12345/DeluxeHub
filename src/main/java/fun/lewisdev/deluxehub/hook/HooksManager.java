@@ -12,7 +12,7 @@ import java.util.Objects;
 
 public class HooksManager {
 
-    private Map<String, PluginHook> hooks;
+    private final Map<String, PluginHook> hooks;
 
     public HooksManager(DeluxeHubPlugin plugin) {
         hooks = new HashMap<>();
@@ -33,7 +33,6 @@ public class HooksManager {
         }
 
         hooks.values().stream().filter(Objects::nonNull).forEach(pluginHook -> pluginHook.onEnable(plugin));
-
     }
 
     public boolean isHookEnabled(String id) {
@@ -43,5 +42,4 @@ public class HooksManager {
     public PluginHook getPluginHook(String id) {
         return hooks.get(id);
     }
-
 }

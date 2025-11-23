@@ -2,15 +2,20 @@ package fun.lewisdev.deluxehub.module.modules.visual.tablist;
 
 import com.cryptomorin.xseries.reflection.XReflection;
 import com.google.common.base.Strings;
+import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.utility.reflection.ReflectionUtils;
 import net.zithium.library.utils.ColorUtil;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Objects;
+import java.util.logging.Level;
 
 public class TablistHelper {
+
+    private static final JavaPlugin PLUGIN = JavaPlugin.getProvidingPlugin(DeluxeHubPlugin.class);
 
     public static void sendTabList(Player player, String header, String footer) {
 
@@ -20,12 +25,10 @@ public class TablistHelper {
         footer = Strings.isNullOrEmpty(footer) ?
                 "" : ColorUtil.color(footer).replace("%player%", player.getDisplayName());
 
-
         if (XReflection.supports(13)) {
             player.setPlayerListHeaderFooter(header, footer);
             return;
         }
-
 
         try {
             Method chatComponentBuilderMethod = ReflectionUtils.getNMSClass("IChatBaseComponent").getDeclaredClasses()[0].getMethod("a", String.class);
@@ -51,7 +54,7 @@ public class TablistHelper {
 
             ReflectionUtils.sendPacket(player, packet);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            PLUGIN.getLogger().log(Level.SEVERE, "Failed to send tablist header/footer to player " + player.getName(), ex);
         }
     }
 }

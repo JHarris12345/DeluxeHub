@@ -1,10 +1,11 @@
 package fun.lewisdev.deluxehub.module.modules.world;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.config.ConfigType;
 import fun.lewisdev.deluxehub.module.Module;
 import fun.lewisdev.deluxehub.module.ModuleType;
-import org.bukkit.Bukkit;
+import fun.lewisdev.deluxehub.utility.TeleportUtil;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -18,19 +19,24 @@ public class LobbySpawn extends Module {
     private boolean spawnJoin;
     private Location location = null;
     private final DeluxeHubPlugin plugin;
+    private final PlatformScheduler scheduler;
 
     public LobbySpawn(DeluxeHubPlugin plugin) {
         super(plugin, ModuleType.LOBBY);
 
         this.plugin = plugin;
+        this.scheduler = DeluxeHubPlugin.scheduler();
     }
 
     @Override
     public void onEnable() {
-        Bukkit.getScheduler().runTask(getPlugin(), () -> {
+        scheduler.runNextTick(task -> {
             FileConfiguration config = getConfig(ConfigType.DATA);
-            if (config.contains("spawn")) location = (Location) config.get("spawn");
+            if (config.contains("spawn")) {
+                location = (Location) config.get("spawn");
+            }
         });
+
         spawnJoin = getConfig(ConfigType.SETTINGS).getBoolean("join_settings.spawn_join", false);
     }
 
@@ -50,12 +56,16 @@ public class LobbySpawn extends Module {
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (spawnJoin && location != null) player.teleport(location);
+        if (spawnJoin && location != null) {
+            TeleportUtil.teleportCompat(player, location);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
-        if (location != null && !inDisabledWorld(player.getLocation())) event.setRespawnLocation(location);
+        if (location != null && !inDisabledWorld(player.getLocation())) {
+            event.setRespawnLocation(location);
+        }
     }
 }

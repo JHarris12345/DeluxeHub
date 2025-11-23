@@ -6,8 +6,11 @@ import fun.lewisdev.deluxehub.config.ConfigType;
 import fun.lewisdev.deluxehub.config.Messages;
 import fun.lewisdev.deluxehub.module.Module;
 import fun.lewisdev.deluxehub.module.ModuleType;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class ChatLock extends Module {
@@ -16,6 +19,13 @@ public class ChatLock extends Module {
 
     public ChatLock(DeluxeHubPlugin plugin) {
         super(plugin, ModuleType.CHAT_LOCK);
+
+        try {
+            Class.forName("io.papermc.paper.event.player.AsyncChatEvent", false, plugin.getClass().getClassLoader());
+            plugin.getServer().getPluginManager().registerEvents(new PaperHandler(plugin, this), plugin);
+        } catch (ClassNotFoundException ignored) {
+            plugin.getServer().getPluginManager().registerEvents(new SpigotHandler(plugin, this), plugin);
+        }
     }
 
     @Override
@@ -28,13 +38,12 @@ public class ChatLock extends Module {
         getPlugin().getConfigManager().getFile(ConfigType.DATA).getConfig().set("chat_locked", isChatLocked);
     }
 
-    @EventHandler
-    public void onPlayerChat(AsyncPlayerChatEvent event) {
-        Player player = event.getPlayer();
+    private void handleChatLock(Player player, Runnable cancelAction) {
+        if (!isChatLocked || player.hasPermission(Permissions.LOCK_CHAT_BYPASS.getPermission())) {
+            return;
+        }
 
-        if (!isChatLocked || player.hasPermission(Permissions.LOCK_CHAT_BYPASS.getPermission())) return;
-
-        event.setCancelled(true);
+        cancelAction.run();
         Messages.CHAT_LOCKED.send(player);
     }
 
@@ -44,5 +53,32 @@ public class ChatLock extends Module {
 
     public void setChatLocked(boolean chatLocked) {
         isChatLocked = chatLocked;
+    }
+
+    /**
+     * Paper handler using AsyncChatEvent + Adventure.
+     * Only registered when Paper's event exists.
+     */
+    private record PaperHandler(DeluxeHubPlugin plugin, ChatLock chatLock) implements Listener {
+
+        @EventHandler(priority = EventPriority.HIGHEST)
+        public void onPlayerChat(AsyncChatEvent event) {
+            final Player player = event.getPlayer();
+            chatLock.handleChatLock(player, () -> event.setCancelled(true));
+        }
+    }
+
+    /**
+     * Spigot handler using AsyncPlayerChatEvent (deprecated on Paper).
+     * Registered only when Paper's event is absent.
+     */
+    private record SpigotHandler(DeluxeHubPlugin plugin, ChatLock chatLock) implements Listener {
+
+        @SuppressWarnings("deprecation")
+        @EventHandler(priority = EventPriority.HIGHEST)
+        public void onPlayerChat(AsyncPlayerChatEvent event) {
+            final Player player = event.getPlayer();
+            chatLock.handleChatLock(player, () -> event.setCancelled(true));
+        }
     }
 }

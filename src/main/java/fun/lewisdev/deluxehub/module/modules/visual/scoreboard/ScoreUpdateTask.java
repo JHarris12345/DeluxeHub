@@ -1,5 +1,6 @@
 package fun.lewisdev.deluxehub.module.modules.visual.scoreboard;
 
+import org.bukkit.Bukkit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -15,10 +16,20 @@ public class ScoreUpdateTask implements Runnable {
     @Override
     public void run() {
         List<UUID> toRemove = new ArrayList<>();
-        scoreboardManager.getPlayers().forEach(uuid -> {
-            if (scoreboardManager.updateScoreboard(uuid) == null) toRemove.add(uuid);
-        });
-        scoreboardManager.getPlayers().removeAll(toRemove);
-    }
 
+        for (UUID uuid : new ArrayList<>(scoreboardManager.getPlayers())) {
+            if (Bukkit.getPlayer(uuid) == null) {
+                toRemove.add(uuid);
+                continue;
+            }
+
+            try {
+                scoreboardManager.updateScoreboard(uuid);
+            } catch (Exception e) {
+                toRemove.add(uuid);
+            }
+        }
+
+        toRemove.forEach(uuid -> scoreboardManager.getPlayers().remove(uuid));
+    }
 }

@@ -1,10 +1,13 @@
 package fun.lewisdev.deluxehub.action.actions;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.action.Action;
 import org.bukkit.entity.Player;
 
 public class CloseInventoryAction implements Action {
+
+    private final PlatformScheduler scheduler = DeluxeHubPlugin.scheduler();
 
     @Override
     public String getIdentifier() {
@@ -13,6 +16,6 @@ public class CloseInventoryAction implements Action {
 
     @Override
     public void execute(DeluxeHubPlugin plugin, Player player, String data) {
-        player.closeInventory();
+        scheduler.runAtEntity(player, task -> player.closeInventory());
     }
 }

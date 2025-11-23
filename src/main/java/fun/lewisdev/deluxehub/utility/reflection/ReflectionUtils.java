@@ -19,10 +19,13 @@
  * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 package fun.lewisdev.deluxehub.utility.reflection;
 
+import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,6 +34,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
 
 /**
  * <b>ReflectionUtils</b> - Reflection handler for NMS and CraftBukkit.<br>
@@ -49,6 +53,9 @@ import java.util.concurrent.CompletableFuture;
  * @version 3.0.0
  */
 public class ReflectionUtils {
+
+    private static final JavaPlugin PLUGIN = JavaPlugin.getProvidingPlugin(DeluxeHubPlugin.class);
+
     /**
      * We use reflection mainly to avoid writing a new class for version barrier.
      * The version barrier is for NMS that uses the Minecraft version as the main package name.
@@ -69,6 +76,7 @@ public class ReflectionUtils {
      * This can be null if the player is offline.
      */
     private static final MethodHandle PLAYER_CONNECTION;
+
     /**
      * Responsible for getting the NMS handler {@code EntityPlayer} object for the player.
      * {@code CraftPlayer} is simply a wrapper for {@code EntityPlayer}.
@@ -77,6 +85,7 @@ public class ReflectionUtils {
      * This is also where the famous player {@code ping} field comes from!
      */
     private static final MethodHandle GET_HANDLE;
+
     /**
      * Sends a packet to the player's client through a {@code NetworkManager} which
      * is where {@code ProtocolLib} controls packets by injecting channels!
@@ -93,11 +102,13 @@ public class ReflectionUtils {
         MethodHandle getHandle = null;
         MethodHandle connection = null;
         try {
+            assert entityPlayer != null;
+            assert playerConnection != null;
             connection = lookup.findGetter(entityPlayer, "playerConnection", playerConnection);
             getHandle = lookup.findVirtual(craftPlayer, "getHandle", MethodType.methodType(entityPlayer));
             sendPacket = lookup.findVirtual(playerConnection, "sendPacket", MethodType.methodType(void.class, getNMSClass("Packet")));
         } catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException ex) {
-            ex.printStackTrace();
+            PLUGIN.getLogger().log(Level.SEVERE, "Failed to initialize ReflectionUtils packet handlers", ex);
         }
 
         PLAYER_CONNECTION = connection;
@@ -105,7 +116,8 @@ public class ReflectionUtils {
         GET_HANDLE = getHandle;
     }
 
-    private ReflectionUtils() {}
+    private ReflectionUtils() {
+    }
 
     /**
      * Get a NMS (net.minecraft.server) class.
@@ -120,7 +132,7 @@ public class ReflectionUtils {
         try {
             return Class.forName(NMS + name);
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            PLUGIN.getLogger().log(Level.WARNING, "Could not find NMS class: " + name, ex);
             return null;
         }
     }
@@ -140,7 +152,7 @@ public class ReflectionUtils {
     public static CompletableFuture<Void> sendPacket(@Nonnull Player player, @Nonnull Object... packets) {
         return CompletableFuture.runAsync(() -> sendPacketSync(player, packets))
                 .exceptionally(ex -> {
-                    ex.printStackTrace();
+                    PLUGIN.getLogger().log(Level.SEVERE, "Failed to send packet to player " + player.getName(), ex);
                     return null;
                 });
     }
@@ -164,7 +176,7 @@ public class ReflectionUtils {
                 for (Object packet : packets) SEND_PACKET.invoke(connection, packet);
             }
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            PLUGIN.getLogger().log(Level.SEVERE, "Failed to send packet sync to player " + player.getName(), throwable);
         }
     }
 
@@ -174,7 +186,7 @@ public class ReflectionUtils {
         try {
             return GET_HANDLE.invoke(player);
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            PLUGIN.getLogger().log(Level.SEVERE, "Failed to get handle for player " + player.getName(), throwable);
             return null;
         }
     }
@@ -186,7 +198,7 @@ public class ReflectionUtils {
             Object handle = GET_HANDLE.invoke(player);
             return PLAYER_CONNECTION.invoke(handle);
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            PLUGIN.getLogger().log(Level.SEVERE, "Failed to get connection for player " + player.getName(), throwable);
             return null;
         }
     }
@@ -204,7 +216,7 @@ public class ReflectionUtils {
         try {
             return Class.forName(CRAFTBUKKIT + name);
         } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+            PLUGIN.getLogger().log(Level.WARNING, "Could not find CraftBukkit class: " + name, ex);
             return null;
         }
     }

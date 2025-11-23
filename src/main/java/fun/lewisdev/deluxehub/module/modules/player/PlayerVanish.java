@@ -1,5 +1,6 @@
 package fun.lewisdev.deluxehub.module.modules.player;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.config.Messages;
 import fun.lewisdev.deluxehub.module.Module;
@@ -12,23 +13,25 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PlayerVanish extends Module {
 
     private List<UUID> vanished;
     private final DeluxeHubPlugin plugin;
+    private final PlatformScheduler scheduler;
 
     public PlayerVanish(DeluxeHubPlugin plugin) {
         super(plugin, ModuleType.VANISH);
         this.plugin = plugin;
+        this.scheduler = DeluxeHubPlugin.scheduler();
     }
 
     @Override
     public void onEnable() {
-        vanished = new ArrayList<>();
+        vanished = new CopyOnWriteArrayList<>();
     }
 
     @Override
@@ -39,17 +42,26 @@ public class PlayerVanish extends Module {
     public void toggleVanish(Player player) {
         if (isVanished(player)) {
             vanished.remove(player.getUniqueId());
-            Bukkit.getOnlinePlayers().forEach(pl -> pl.showPlayer(plugin, player));
+            
+            for (Player pl : Bukkit.getOnlinePlayers()) {
+                showPlayer(pl, player);
+            }
 
             Messages.VANISH_DISABLE.send(player);
-            player.removePotionEffect(PotionEffectType.NIGHT_VISION);
-
+            
+            scheduler.runAtEntity(player, task ->
+                  player.removePotionEffect(PotionEffectType.NIGHT_VISION));
         } else {
             vanished.add(player.getUniqueId());
-            Bukkit.getOnlinePlayers().forEach(pl -> pl.hidePlayer(plugin, player));
+            
+            for (Player pl : Bukkit.getOnlinePlayers()) {
+                hidePlayer(pl, player);
+            }
 
             Messages.VANISH_ENABLE.send(player);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 1000000, 1));
+            
+            scheduler.runAtEntity(player, task ->
+                  player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, PotionEffect.INFINITE_DURATION, 0)));
         }
     }
 
@@ -59,13 +71,35 @@ public class PlayerVanish extends Module {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        vanished.forEach(hidden -> event.getPlayer().hidePlayer(Bukkit.getPlayer(hidden)));
+        Player joiningPlayer = event.getPlayer();
+        vanished.forEach(hiddenUUID -> {
+            Player hiddenPlayer = Bukkit.getPlayer(hiddenUUID);
+            if (hiddenPlayer != null) {
+                hidePlayer(joiningPlayer, hiddenPlayer);
+            }
+        });
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+        scheduler.runAtEntity(player, task -> player.removePotionEffect(PotionEffectType.NIGHT_VISION));
         vanished.remove(player.getUniqueId());
+    }
+
+    private void hidePlayer(Player source, Player target) {
+        if (!Bukkit.isOwnedByCurrentRegion(source) || !Bukkit.isOwnedByCurrentRegion(target)) {
+            return;
+        }
+
+        scheduler.runAtEntity(source, task -> source.hidePlayer(plugin, target));
+    }
+
+    private void showPlayer(Player source, Player target) {
+        if (!Bukkit.isOwnedByCurrentRegion(source) || !Bukkit.isOwnedByCurrentRegion(target)) {
+            return;
+        }
+
+        scheduler.runAtEntity(source, task -> source.showPlayer(plugin, target));
     }
 }

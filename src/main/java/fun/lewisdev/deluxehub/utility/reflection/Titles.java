@@ -1,4 +1,5 @@
 package fun.lewisdev.deluxehub.utility.reflection;
+
 /*
  * The MIT License (MIT)
  *
@@ -21,12 +22,15 @@ package fun.lewisdev.deluxehub.utility.reflection;
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
+import java.util.logging.Level;
 
 /*
  * References
@@ -44,14 +48,16 @@ import java.util.Objects;
  * Messages are not colorized by default.
  * <p>
  * Titles are text messages that appear in the
- * middle of the players screen: https://minecraft.gamepedia.com/Commands/title
- * PacketPlayOutTitle: https://wiki.vg/Protocol#Title
+ * middle of the players screen: <a href="https://minecraft.gamepedia.com/Commands/title">...</a>
+ * PacketPlayOutTitle: <a href="https://wiki.vg/Protocol#Title">...</a>
  *
  * @author Crypto Morin
  * @version 1.0.0
  * @see ReflectionUtils
  */
 public class Titles {
+
+    private static final JavaPlugin PLUGIN = JavaPlugin.getProvidingPlugin(DeluxeHubPlugin.class);
 
     private static final Object TIMES;
     private static final Object TITLE;
@@ -64,6 +70,7 @@ public class Titles {
     static {
         Class<?> chatComponentText = ReflectionUtils.getNMSClass("ChatComponentText");
         Class<?> packet = ReflectionUtils.getNMSClass("PacketPlayOutTitle");
+        assert packet != null;
         Class<?> titleTypes = packet.getDeclaredClasses()[0];
         MethodHandle packetCtor = null;
         MethodHandle chatComp = null;
@@ -75,21 +82,15 @@ public class Titles {
 
         for (Object type : titleTypes.getEnumConstants()) {
             switch (type.toString()) {
-                case "TIMES":
-                    times = type;
-                    break;
-                case "TITLE":
-                    title = type;
-                    break;
-                case "SUBTITLE":
-                    subtitle = type;
-                    break;
-                case "CLEAR":
-                    clear = type;
+                case "TIMES" -> times = type;
+                case "TITLE" -> title = type;
+                case "SUBTITLE" -> subtitle = type;
+                case "CLEAR" -> clear = type;
             }
         }
 
         try {
+            assert chatComponentText != null;
             chatComp = MethodHandles.lookup().findConstructor(chatComponentText,
                     MethodType.methodType(void.class, String.class));
 
@@ -98,7 +99,7 @@ public class Titles {
                             ReflectionUtils.getNMSClass("IChatBaseComponent"),
                             int.class, int.class, int.class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            e.printStackTrace();
+            PLUGIN.getLogger().log(Level.SEVERE, "Failed to initialize Titles packet constructors", e);
         }
 
         TITLE = title;
@@ -129,7 +130,7 @@ public class Titles {
                 ReflectionUtils.sendPacket(player, subtitlePacket);
             }
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            PLUGIN.getLogger().log(Level.SEVERE, "Failed to send title to player " + player.getName(), throwable);
         }
     }
 
@@ -140,10 +141,9 @@ public class Titles {
         try {
             clearPacket = PACKET.invoke(CLEAR, null, -1, -1, -1);
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            PLUGIN.getLogger().log(Level.SEVERE, "Failed to create clear title packet for player " + player.getName(), throwable);
         }
 
         ReflectionUtils.sendPacket(player, clearPacket);
     }
-
 }

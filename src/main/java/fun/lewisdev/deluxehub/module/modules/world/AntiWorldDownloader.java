@@ -12,6 +12,7 @@ import fun.lewisdev.deluxehub.module.ModuleType;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.jetbrains.annotations.NotNull;
 
 public class AntiWorldDownloader extends Module implements PluginMessageListener {
 
@@ -44,8 +45,10 @@ public class AntiWorldDownloader extends Module implements PluginMessageListener
         }
     }
 
-    public void onPluginMessageReceived(String channel, Player player, byte[] data) {
-        if (player.hasPermission(Permissions.ANTI_WDL_BYPASS.getPermission())) return;
+    public void onPluginMessageReceived(@NotNull String channel, Player player, byte[] data) {
+        if (player.hasPermission(Permissions.ANTI_WDL_BYPASS.getPermission())) {
+            return;
+        }
 
         if (legacy && channel.equals("WDL|INIT") || !legacy && channel.equals("wdl:init")) {
 
@@ -55,8 +58,9 @@ public class AntiWorldDownloader extends Module implements PluginMessageListener
             if (legacy) player.sendPluginMessage(getPlugin(), "WDL|CONTROL", out.toByteArray());
             else player.sendPluginMessage(getPlugin(), "wdl:control", out.toByteArray());
 
-            if (!getPlugin().getConfigManager().getFile(ConfigType.SETTINGS).getConfig().getBoolean("anti_wdl.admin_notify"))
+            if (!getPlugin().getConfigManager().getFile(ConfigType.SETTINGS).getConfig().getBoolean("anti_wdl.admin_notify")) {
                 return;
+            }
 
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (p.hasPermission(Permissions.ANTI_WDL_NOTIFY.getPermission())) {

@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public class CooldownManager {
 
-    private Table<String, CooldownType, Long> cooldowns = HashBasedTable.create();
+    private final Table<String, CooldownType, Long> cooldowns = HashBasedTable.create();
 
     /**
      * Retrieve the number of milliseconds left until a given cooldown expires.

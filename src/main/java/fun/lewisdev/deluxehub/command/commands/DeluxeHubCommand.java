@@ -3,6 +3,7 @@ package fun.lewisdev.deluxehub.command.commands;
 import cl.bgmp.minecraft.util.commands.CommandContext;
 import cl.bgmp.minecraft.util.commands.annotations.Command;
 import cl.bgmp.minecraft.util.commands.exceptions.CommandException;
+import com.tcoded.folialib.impl.PlatformScheduler;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.Permissions;
 import fun.lewisdev.deluxehub.command.CommandManager;
@@ -29,9 +30,11 @@ import java.util.stream.Collectors;
 public class DeluxeHubCommand {
 
     private final DeluxeHubPlugin plugin;
+    private final PlatformScheduler scheduler;
 
     public DeluxeHubCommand(DeluxeHubPlugin plugin) {
         this.plugin = plugin;
+        this.scheduler = DeluxeHubPlugin.scheduler();
     }
 
     @Command(
@@ -103,7 +106,9 @@ public class DeluxeHubCommand {
 		*/
         else if (args.getString(0).equalsIgnoreCase("scoreboard")) {
 
-            if (!(sender instanceof Player)) throw new CommandException("Console cannot toggle the scoreboard");
+            if (!(sender instanceof Player player)) {
+                throw new CommandException("Console cannot toggle the scoreboard");
+            }
 
             if (!sender.hasPermission(Permissions.COMMAND_SCOREBOARD_TOGGLE.getPermission())) {
                 Messages.NO_PERMISSION.send(sender);
@@ -115,7 +120,6 @@ public class DeluxeHubCommand {
                 return;
             }
 
-            Player player = (Player) sender;
             ScoreboardManager scoreboardManager = ((ScoreboardManager) plugin.getModuleManager().getModule(ModuleType.SCOREBOARD));
 
             if (scoreboardManager.hasScore(player.getUniqueId())) {
@@ -189,19 +193,17 @@ public class DeluxeHubCommand {
             String menuId = args.getString(1);
 
             plugin.getInventoryManager().getInventory(menuId).ifPresentOrElse(
-                    inventory -> inventory.openInventory((Player) sender),
+                    inventory -> scheduler.runAtEntity((Player) sender, task -> inventory.openInventory((Player) sender)),
                     () -> sender.sendMessage(ColorUtil.color("&c'" + menuId + "' is not a valid menu ID."))
             );
         }
-
-
 
         /*
          * Holograms
          */
         if (args.getString(0).equalsIgnoreCase("hologram") || args.getString(0).equalsIgnoreCase("holo")) {
 
-            if (!(sender instanceof Player)) {
+            if (!(sender instanceof Player player)) {
                 sender.sendMessage("You cannot do this command.");
                 return;
             }
@@ -234,8 +236,6 @@ public class DeluxeHubCommand {
                 return;
             }
 
-            Player player = (Player) sender;
-
             if (args.argsLength() >= 2) {
                 if (args.getString(1).equalsIgnoreCase("list")) {
 
@@ -251,7 +251,6 @@ public class DeluxeHubCommand {
                     }
                     sender.sendMessage("");
                 }
-
 
                 if (args.getString(1).equalsIgnoreCase("create")) {
                     if (args.argsLength() == 2) {
@@ -272,7 +271,6 @@ public class DeluxeHubCommand {
                     Messages.HOLOGRAMS_SPAWNED.send(player, "%name%", args.getString(2));
                     return;
                 }
-
 
                 if (args.getString(1).equalsIgnoreCase("remove") || args.getString(1).equalsIgnoreCase("delete")) {
                     if (args.argsLength() == 2) {
@@ -375,11 +373,7 @@ public class DeluxeHubCommand {
                     holo.setLocation(player.getLocation());
                     Messages.HOLOGRAMS_MOVED.send(player, "%name%", args.getString(2));
                 }
-                return;
-
             }
-
         }
-
     }
 }

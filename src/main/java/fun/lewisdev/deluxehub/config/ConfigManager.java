@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class ConfigManager {
 
-    private Map<ConfigType, ConfigHandler> configurations;
+    private final Map<ConfigType, ConfigHandler> configurations;
 
     public ConfigManager() {
         configurations = new HashMap<>();
@@ -38,7 +38,7 @@ public class ConfigManager {
     }
 
     /**
-     * Saves the ConfigType.DATA file
+     * Saves the "ConfigType.DATA" file
      */
     public void saveFiles() {
         getFile(ConfigType.DATA).save();
@@ -51,5 +51,4 @@ public class ConfigManager {
     public FileConfiguration getFileConfiguration(File file) {
         return YamlConfiguration.loadConfiguration(file);
     }
-
 }

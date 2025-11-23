@@ -1,5 +1,7 @@
 package fun.lewisdev.deluxehub.module.modules.visual.scoreboard;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.config.ConfigType;
 import fun.lewisdev.deluxehub.module.Module;
@@ -13,12 +15,20 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ScoreboardManager extends Module {
 
-    private int scoreTask;
-    private Map<UUID, ScoreHelper> players;
+    private final PlatformScheduler scheduler = DeluxeHubPlugin.scheduler();
+    private WrappedTask scoreTask;
+    private final Map<UUID, ScoreHelper> players = new ConcurrentHashMap<>();
+    private final Set<UUID> toggledPlayers = ConcurrentHashMap.newKeySet();
 
     private long joinDelay;
     private long worldDelay;
@@ -31,55 +41,87 @@ public class ScoreboardManager extends Module {
 
     @Override
     public void onEnable() {
-        players = new HashMap<>();
         FileConfiguration config = getConfig(ConfigType.SETTINGS);
 
         title = config.getString("scoreboard.title");
         lines = config.getStringList("scoreboard.lines");
 
-        joinDelay = config.getLong("scoreboard.display_delay.server_enter", 0L);
-        worldDelay = config.getLong("scoreboard.display_delay.world_change", 0L);
+        joinDelay = config.getLong("scoreboard.display_delay.server_enter", 1L);
+        worldDelay = config.getLong("scoreboard.display_delay.world_change", 1L);
 
         if (config.getBoolean("scoreboard.refresh.enabled")) {
-            scoreTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), new ScoreUpdateTask(this), 0L, config.getLong("scoreboard.refresh.rate"));
+            scoreTask = scheduler.runTimer(new ScoreUpdateTask(this), 1L, config.getLong("scoreboard.refresh.rate"));
         }
 
-        getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(), () -> Bukkit.getOnlinePlayers().stream().filter(player -> !inDisabledWorld(player.getLocation())).forEach(this::createScoreboard), 20L);
+        scheduler.runLater(() -> Bukkit.getOnlinePlayers().stream()
+                .filter(player -> !inDisabledWorld(player.getLocation()))
+                .forEach(this::createScoreboard), 20L);
     }
 
     @Override
     public void onDisable() {
-        Bukkit.getScheduler().cancelTask(scoreTask);
-        Bukkit.getOnlinePlayers().forEach(this::removeScoreboard);
+        if (scoreTask != null) {
+            scoreTask.cancel();
+        }
+
+        for (UUID uuid : new HashSet<>(players.keySet())) {
+            ScoreHelper helper = players.remove(uuid);
+            if (helper != null) {
+                helper.remove();
+            }
+        }
+
+        players.clear();
+        toggledPlayers.clear();
     }
 
     public void createScoreboard(Player player) {
-        players.put(player.getUniqueId(), updateScoreboard(player.getUniqueId()));
+        if (toggledPlayers.contains(player.getUniqueId())) {
+            return;
+        }
+
+        scheduler.runAtEntity(player, task -> {
+            try {
+                ScoreHelper helper = updateScoreboard(player.getUniqueId());
+                if (helper != null) {
+                    players.put(player.getUniqueId(), helper);
+                }
+            } catch (Exception e) {
+                getPlugin().getLogger().warning("Failed to create scoreboard for " + player.getName());
+            }
+        });
     }
 
     public ScoreHelper updateScoreboard(UUID uuid) {
         Player player = Bukkit.getPlayer(uuid);
-        if (player == null) return null;
+        if (player == null) {
+            return null;
+        }
 
-        int lines = this.lines.size();
+        if (toggledPlayers.contains(uuid)) {
+            return players.get(uuid);
+        }
 
-        ScoreHelper helper = players.get(player.getUniqueId());
-        if (helper == null) helper = new ScoreHelper(player);
+        ScoreHelper helper = players.get(uuid);
+        if (helper == null) {
+            helper = new ScoreHelper(player);
+        }
+
         helper.setTitle(title);
 
-        for (String text : this.lines) {
-            helper.setSlot(lines, text);
-            lines--;
+        int slot = lines.size();
+        for (String text : lines) {
+            helper.setSlot(slot, text);
+            slot--;
         }
 
         return helper;
-
     }
 
     public void removeScoreboard(Player player) {
-        if (players.containsKey(player.getUniqueId())) {
-            players.remove(player.getUniqueId());
-            player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+        ScoreHelper helper = players.remove(player.getUniqueId());
+        if (helper != null) {
+            scheduler.runAtEntity(player, task -> helper.remove());
         }
     }
 
@@ -91,11 +133,27 @@ public class ScoreboardManager extends Module {
         return players.keySet();
     }
 
+    public void toggleScoreboard(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        if (toggledPlayers.contains(uuid)) {
+            toggledPlayers.remove(uuid);
+            createScoreboard(player);
+        } else {
+            toggledPlayers.add(uuid);
+            removeScoreboard(player);
+        }
+    }
+
+    public boolean isToggled(UUID uuid) {
+        return !toggledPlayers.contains(uuid);
+    }
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (!inDisabledWorld(player.getLocation()) && !hasScore(player.getUniqueId())) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), () -> createScoreboard(player), joinDelay);
+            scheduler.runAtEntityLater(player, task -> createScoreboard(player), joinDelay);
         }
     }
 
@@ -103,18 +161,25 @@ public class ScoreboardManager extends Module {
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         removeScoreboard(player);
+        toggledPlayers.remove(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onWorldChange(PlayerTeleportEvent event) {
         Player player = event.getPlayer();
-        if (event.getFrom().getWorld().getName().equals(event.getTo().getWorld().getName())) return;
+        
+        if (event.getTo().getWorld() == null) {
+            return;
+        }
 
-        if (inDisabledWorld(event.getTo().getWorld()) && players.containsKey(player.getUniqueId())) {
+        if (event.getFrom().getWorld().equals(event.getTo().getWorld())) {
+            return;
+        }
+
+        if (inDisabledWorld(event.getTo()) && players.containsKey(player.getUniqueId())) {
             removeScoreboard(player);
-        } else if (!players.containsKey(player.getUniqueId())) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), () -> createScoreboard(player), worldDelay);
+        } else if (!inDisabledWorld(event.getTo()) && !players.containsKey(player.getUniqueId())) {
+            scheduler.runAtEntityLater(player, task -> createScoreboard(player), worldDelay);
         }
     }
-
 }

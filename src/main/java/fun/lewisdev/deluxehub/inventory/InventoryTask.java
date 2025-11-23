@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public class InventoryTask implements Runnable {
 
-    private AbstractInventory inventory;
+    private final AbstractInventory inventory;
 
     InventoryTask(AbstractInventory inventory) {
         this.inventory = inventory;

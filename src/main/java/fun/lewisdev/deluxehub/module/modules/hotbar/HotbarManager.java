@@ -11,8 +11,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class HotbarManager extends Module {
 
@@ -24,7 +24,7 @@ public class HotbarManager extends Module {
 
     @Override
     public void onEnable() {
-        hotbarItems = new ArrayList<>();
+        hotbarItems = new CopyOnWriteArrayList<>();
         FileConfiguration config = getConfig(ConfigType.SETTINGS);
 
         if (config.getBoolean("custom_join_items.enabled")) {
@@ -41,7 +41,6 @@ public class HotbarManager extends Module {
                 customItem.setAllowMovement(config.getBoolean("custom_join_items.disable_inventory_movement"));
                 registerHotbarItem(customItem);
             }
-
         }
 
         if (config.getBoolean("player_hider.enabled")) {
@@ -77,5 +76,4 @@ public class HotbarManager extends Module {
     private void removeItems() {
         Bukkit.getOnlinePlayers().stream().filter(player -> !inDisabledWorld(player.getLocation())).forEach(player -> hotbarItems.forEach(hotbarItem -> hotbarItem.removeItem(player)));
     }
-
 }

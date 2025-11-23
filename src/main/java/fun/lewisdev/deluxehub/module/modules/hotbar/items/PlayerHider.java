@@ -1,6 +1,8 @@
 package fun.lewisdev.deluxehub.module.modules.hotbar.items;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
 import de.tr7zw.changeme.nbtapi.NBTItem;
+import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.config.ConfigType;
 import fun.lewisdev.deluxehub.config.Messages;
 import fun.lewisdev.deluxehub.cooldown.CooldownType;
@@ -18,19 +20,20 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PlayerHider extends HotbarItem {
 
-    private int cooldown;
-    private ItemStack hiddenItem;
-    private List<UUID> hidden;
+    private final PlatformScheduler scheduler = DeluxeHubPlugin.scheduler();
+    private final int cooldown;
+    private final ItemStack hiddenItem;
+    private final List<UUID> hidden;
 
     public PlayerHider(HotbarManager hotbarManager, ItemStack item, int slot, String key) {
         super(hotbarManager, item, slot, key);
-        hidden = new ArrayList<>();
+        hidden = new CopyOnWriteArrayList<>();
         FileConfiguration config = getHotbarManager().getConfig(ConfigType.SETTINGS);
         NBTItem nbtItem = new NBTItem(ItemStackBuilder.getItemStack(config.getConfigurationSection("player_hider.hidden")).build());
         nbtItem.setString("hotbarItem", key);
@@ -48,16 +51,18 @@ public class PlayerHider extends HotbarItem {
 
         if (!hidden.contains(player.getUniqueId())) {
             for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
-                player.hidePlayer(pl);
+                hidePlayer(player, pl);
             }
+
             hidden.add(player.getUniqueId());
             Messages.PLAYER_HIDER_HIDDEN.send(player);
 
             player.getInventory().setItem(getSlot(), hiddenItem);
         } else {
             for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
-                player.showPlayer(pl);
+                showPlayer(player, pl);
             }
+
             hidden.remove(player.getUniqueId());
             Messages.PLAYER_HIDER_SHOWN.send(player);
 
@@ -71,9 +76,10 @@ public class PlayerHider extends HotbarItem {
 
         if (hidden.contains(player.getUniqueId())) {
             for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
-                player.showPlayer(pl);
+                showPlayer(player, pl);
             }
         }
+
         hidden.remove(player.getUniqueId());
     }
 
@@ -81,7 +87,10 @@ public class PlayerHider extends HotbarItem {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         hidden.forEach(uuid -> {
-            Bukkit.getPlayer(uuid).hidePlayer(player);
+            Player hiddenPlayer = Bukkit.getPlayer(uuid);
+            if (hiddenPlayer != null) {
+                hidePlayer(hiddenPlayer, player);
+            }
         });
     }
 
@@ -89,7 +98,10 @@ public class PlayerHider extends HotbarItem {
     public void onWorldChange(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
         if (getHotbarManager().inDisabledWorld(player.getLocation()) && hidden.contains(player.getUniqueId())) {
-            for (Player p : Bukkit.getOnlinePlayers()) player.showPlayer(p);
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                showPlayer(player, p);
+            }
+
             hidden.remove(player.getUniqueId());
         }
     }
@@ -99,9 +111,28 @@ public class PlayerHider extends HotbarItem {
         Player player = event.getPlayer();
         if (hidden.contains(player.getUniqueId())) {
             for (Player p : Bukkit.getOnlinePlayers()) {
-                player.showPlayer(p);
+                showPlayer(player, p);
             }
+
             hidden.remove(player.getUniqueId());
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void hidePlayer(Player source, Player target) {
+        if (!Bukkit.isOwnedByCurrentRegion(source) || !Bukkit.isOwnedByCurrentRegion(target)) {
+            return;
+        }
+
+        scheduler.runAtEntity(source, task -> source.hidePlayer(target));
+    }
+
+    @SuppressWarnings("deprecation")
+    private void showPlayer(Player source, Player target) {
+        if (!Bukkit.isOwnedByCurrentRegion(source) || !Bukkit.isOwnedByCurrentRegion(target)) {
+            return;
+        }
+
+        scheduler.runAtEntity(source, task -> source.showPlayer(target));
     }
 }

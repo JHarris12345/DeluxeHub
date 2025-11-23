@@ -24,9 +24,10 @@ public class CreativeCommand {
     )
     public void creative(final CommandContext args, final CommandSender sender) throws CommandException {
         if (args.argsLength() == 0) {
-            if (!(sender instanceof Player)) throw new CommandException("Console cannot change gamemode");
+            if (!(sender instanceof Player player)) {
+                throw new CommandException("Console cannot change gamemode");
+            }
 
-            Player player = (Player) sender;
             if (!player.hasPermission(Permissions.COMMAND_GAMEMODE.getPermission())) {
                 Messages.NO_PERMISSION.send(sender);
                 return;
@@ -52,6 +53,7 @@ public class CreativeCommand {
                 Messages.GAMEMODE_CHANGE.send(player, "%gamemode%", "CREATIVE");
                 Messages.GAMEMODE_CHANGE_OTHER.send(sender, "%player%", player.getName(), "%gamemode%", "CREATIVE");
             }
+
             player.setGameMode(GameMode.CREATIVE);
         }
     }

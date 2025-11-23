@@ -1,21 +1,26 @@
 package fun.lewisdev.deluxehub.inventory;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.inventory.inventories.CustomGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 public class InventoryManager {
 
     private DeluxeHubPlugin plugin;
+    private PlatformScheduler scheduler;
     private final Map<String, AbstractInventory> inventories;
 
     public InventoryManager() {
@@ -24,6 +29,7 @@ public class InventoryManager {
 
     public void onEnable(DeluxeHubPlugin plugin) {
         this.plugin = plugin;
+        this.scheduler = DeluxeHubPlugin.scheduler();
         loadCustomMenus();
         plugin.getServer().getPluginManager().registerEvents(new InventoryListener(), plugin);
     }
@@ -34,7 +40,9 @@ public class InventoryManager {
 
         // Load all menu files
         File[] yamlFiles = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(".yml"));
-        if (yamlFiles == null) return;
+        if (yamlFiles == null) {
+            return;
+        }
 
         for (File file : yamlFiles) {
             String name = file.getName().replace(".yml", "");
@@ -49,25 +57,29 @@ public class InventoryManager {
                 customGUI.onEnable();
                 plugin.getLogger().info("Loaded custom menu '" + name + "'.");
             } catch (Exception e) {
-                plugin.getLogger().severe("Could not load file '" + name + "' (YAML error).");
-                e.printStackTrace();
+                plugin.getLogger().log(Level.SEVERE, "Could not load file '" + name + "' (YAML error)", e);
             }
         }
     }
 
     private void createMenusDirectoryIfNeeded(File directory) {
         if (!directory.exists()) {
-            directory.mkdir();
+            if (!directory.mkdir()) {
+                plugin.getLogger().warning("Failed to create menus directory at: " + directory.getPath());
+                return;
+            }
+
             File file = new File(directory, "serverselector.yml");
             if (!file.exists()) {
                 try (InputStream inputStream = this.plugin.getResource("serverselector.yml")) {
                     if (inputStream != null) {
                         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        plugin.getLogger().info("Created default serverselector.yml menu.");
                     } else {
                         plugin.getLogger().warning("Resource 'serverselector.yml' not found.");
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    plugin.getLogger().log(Level.SEVERE, "Failed to copy serverselector.yml to menus directory", e);
                 }
             }
         }
@@ -90,11 +102,13 @@ public class InventoryManager {
             abstractInventory.getOpenInventories().forEach(uuid -> {
                 Player player = Bukkit.getPlayer(uuid);
                 if (player != null) {
-                    player.closeInventory();
+                    scheduler.runAtEntity(player, task -> player.closeInventory());
                 }
             });
+
             abstractInventory.getOpenInventories().clear();
         });
+
         inventories.clear();
     }
 }

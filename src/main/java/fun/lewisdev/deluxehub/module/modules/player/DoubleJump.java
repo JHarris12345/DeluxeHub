@@ -37,8 +37,13 @@ public class DoubleJump extends Module {
         launchY = config.getDouble("double_jump.launch_power_y", 1.2);
         actions = config.getStringList("double_jump.actions");
 
-        if (launch > 4.0) launch = 4.0;
-        if (launchY > 4.0) launchY = 4.0;
+        if (launch > 4.0) {
+            launch = 4.0;
+        }
+
+        if (launchY > 4.0) {
+            launchY = 4.0;
+        }
     }
 
     @Override
@@ -50,10 +55,21 @@ public class DoubleJump extends Module {
         Player player = event.getPlayer();
 
         // Basic checks
-        if (player.hasPermission(Permissions.DOUBLE_JUMP_BYPASS.getPermission())) return;
-        if (inDisabledWorld(player.getLocation())) return;
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
-        if (!event.isFlying()) return;
+        if (player.hasPermission(Permissions.DOUBLE_JUMP_BYPASS.getPermission())) {
+            return;
+        }
+
+        if (inDisabledWorld(player.getLocation())) {
+            return;
+        }
+
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
+            return;
+        }
+
+        if (!event.isFlying()) {
+            return;
+        }
 
         // Check if player is on solid ground (more reliable than checking for AIR)
         if (!player.getLocation().subtract(0, 1, 0).getBlock().getType().isSolid()) {
@@ -78,19 +94,19 @@ public class DoubleJump extends Module {
         player.setAllowFlight(false);
     }
 
-
     @EventHandler
     public void onWorldChange(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
         if (player.getGameMode() != GameMode.CREATIVE && player.getGameMode() != GameMode.SPECTATOR && !inDisabledWorld(player.getLocation())) {
-            player.getPlayer().setAllowFlight(true);
+            player.setAllowFlight(true);
         }
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (player.getGameMode() != GameMode.CREATIVE && player.getGameMode() != GameMode.SPECTATOR)
-            player.getPlayer().setAllowFlight(true);
+        if (player.getGameMode() != GameMode.CREATIVE && player.getGameMode() != GameMode.SPECTATOR) {
+            player.setAllowFlight(true);
+        }
     }
 }

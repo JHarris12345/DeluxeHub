@@ -67,5 +67,4 @@ public abstract class Module implements Listener {
     public abstract void onEnable();
 
     public abstract void onDisable();
-
 }

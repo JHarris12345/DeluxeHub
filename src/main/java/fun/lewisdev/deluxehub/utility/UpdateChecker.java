@@ -1,5 +1,7 @@
 package fun.lewisdev.deluxehub.utility;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
+import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.Permissions;
 import net.zithium.library.utils.ColorUtil;
 import org.bukkit.Bukkit;
@@ -11,13 +13,14 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.logging.Level;
 
 /*
    Credits: Benz56
@@ -26,6 +29,7 @@ import java.net.URL;
 public class UpdateChecker {
 
     private final JavaPlugin plugin;
+    private final PlatformScheduler scheduler;
     private final String localPluginVersion;
     private String spigotPluginVersion;
 
@@ -35,42 +39,44 @@ public class UpdateChecker {
 
     public UpdateChecker(JavaPlugin plugin) {
         this.plugin = plugin;
+        this.scheduler = DeluxeHubPlugin.scheduler();
         this.localPluginVersion = plugin.getDescription().getVersion();
     }
 
     public void checkForUpdate() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                    try {
-                        final HttpsURLConnection connection = (HttpsURLConnection) new URL("https://api.spigotmc.org/legacy/update.php?resource=" + ID).openConnection();
-                        connection.setRequestMethod("GET");
-                        spigotPluginVersion = new BufferedReader(new InputStreamReader(connection.getInputStream())).readLine();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        cancel();
+        scheduler.runTimerAsync(task -> {
+            try {
+                final URI uri = new URI("https://api.spigotmc.org/legacy/update.php?resource=" + ID);
+                final HttpsURLConnection connection = (HttpsURLConnection) uri.toURL().openConnection();
+                connection.setRequestMethod("GET");
+                spigotPluginVersion = new BufferedReader(new InputStreamReader(connection.getInputStream())).readLine();
+            } catch (IOException | URISyntaxException e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to check for updates from Spigot API", e);
+                task.cancel();
+                return;
+            }
+
+            if (localPluginVersion.equals(spigotPluginVersion)) {
+                return;
+            }
+
+            plugin.getLogger().info("An update for DeluxeHub (v%VERSION%) is available at:".replace("%VERSION%", spigotPluginVersion));
+            plugin.getLogger().info("https://www.spigotmc.org/resources/" + ID);
+
+            scheduler.runNextTick(nextTask -> Bukkit.getPluginManager().registerEvents(new Listener() {
+                @EventHandler(priority = EventPriority.MONITOR)
+                public void onPlayerJoin(final PlayerJoinEvent event) {
+                    final Player player = event.getPlayer();
+                    if (!player.hasPermission(UPDATE_PERM)) {
                         return;
                     }
 
-                    if (localPluginVersion.equals(spigotPluginVersion)) return;
+                    player.sendMessage(ColorUtil.color("&7An update (v%VERSION%) for DeluxeHub is available at:".replace("%VERSION%", spigotPluginVersion)));
+                    player.sendMessage(ColorUtil.color("&6https://www.spigotmc.org/resources/" + ID));
+                }
+            }, plugin));
 
-                    plugin.getLogger().info("An update for DeluxeHub (v%VERSION%) is available at:".replace("%VERSION%", spigotPluginVersion));
-                    plugin.getLogger().info("https://www.spigotmc.org/resources/" + ID);
-
-                    Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().registerEvents(new Listener() {
-                        @EventHandler(priority = EventPriority.MONITOR)
-                        public void onPlayerJoin(final PlayerJoinEvent event) {
-                            final Player player = event.getPlayer();
-                            if (!player.hasPermission(UPDATE_PERM)) return;
-                            player.sendMessage(ColorUtil.color("&7An update (v%VERSION%) for DeluxeHub is available at:".replace("%VERSION%", spigotPluginVersion)));
-                            player.sendMessage(ColorUtil.color("&6https://www.spigotmc.org/resources/" + ID));
-                        }
-                    }, plugin));
-
-                    cancel();
-                });
-            }
-        }.runTaskTimer(plugin, 0, CHECK_INTERVAL);
+            task.cancel();
+        }, 1, CHECK_INTERVAL);
     }
 }

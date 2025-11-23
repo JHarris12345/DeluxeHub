@@ -6,8 +6,8 @@ import cl.bgmp.minecraft.util.commands.exceptions.CommandException;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import fun.lewisdev.deluxehub.module.ModuleType;
 import fun.lewisdev.deluxehub.module.modules.world.LobbySpawn;
+import fun.lewisdev.deluxehub.utility.TeleportUtil;
 import net.zithium.library.utils.ColorUtil;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -26,7 +26,7 @@ public class LobbyCommand {
     )
     public void lobby(final CommandContext args, final CommandSender sender) throws CommandException {
 
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player player)) {
             sender.sendMessage("Console cannot teleport to spawn");
             return;
         }
@@ -37,8 +37,6 @@ public class LobbyCommand {
             return;
         }
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> ((Player) sender).teleport(location), 3L);
-
+        TeleportUtil.teleportCompatLaterAtEntity(player, location, 3L, null);
     }
-
 }

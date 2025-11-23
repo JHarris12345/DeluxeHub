@@ -34,5 +34,4 @@ public class CustomCommand {
     public List<String> getActions() {
         return actions;
     }
-
 }

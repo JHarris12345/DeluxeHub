@@ -27,9 +27,8 @@ public class GamemodeCommand {
 
         if (args.argsLength() == 1) {
 
-            if (!(sender instanceof Player)) throw new CommandException("Console cannot change gamemode");
+            if (!(sender instanceof Player player)) throw new CommandException("Console cannot change gamemode");
 
-            Player player = (Player) sender;
             if (!player.hasPermission(Permissions.COMMAND_GAMEMODE.getPermission())) {
                 Messages.NO_PERMISSION.send(sender);
                 return;
@@ -85,6 +84,7 @@ public class GamemodeCommand {
         } else if (gamemode.equals("3") || gamemode.equalsIgnoreCase("spectator") || gamemode.equalsIgnoreCase("sp")) {
             return GameMode.SPECTATOR;
         }
+
         return null;
     }
 }

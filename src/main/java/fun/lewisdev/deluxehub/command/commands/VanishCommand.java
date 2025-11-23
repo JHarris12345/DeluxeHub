@@ -13,7 +13,7 @@ import org.bukkit.entity.Player;
 
 public class VanishCommand {
 
-    private DeluxeHubPlugin plugin;
+    private final DeluxeHubPlugin plugin;
 
     public VanishCommand(DeluxeHubPlugin plugin) {
         this.plugin = plugin;
@@ -30,14 +30,12 @@ public class VanishCommand {
             return;
         }
 
-        if (!(sender instanceof Player)) {
+        if (!(sender instanceof Player player)) {
             sender.sendMessage("Console cannot set the spawn location.");
             return;
         }
 
-        Player player = (Player) sender;
         PlayerVanish vanishModule = ((PlayerVanish) plugin.getModuleManager().getModule(ModuleType.VANISH));
         vanishModule.toggleVanish(player);
     }
-
 }

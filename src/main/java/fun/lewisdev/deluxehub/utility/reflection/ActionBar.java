@@ -19,19 +19,22 @@
  * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 package fun.lewisdev.deluxehub.utility.reflection;
 
+import com.tcoded.folialib.impl.PlatformScheduler;
 import fun.lewisdev.deluxehub.DeluxeHubPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 
 /*
  * References
@@ -50,7 +53,7 @@ import java.util.concurrent.Callable;
  * <p>
  * Action bars are text messages that appear above
  * the player's <a href="https://minecraft.gamepedia.com/Heads-up_display">hotbar</a>
- * Note that this is different than the text appeared when switching between items.
+ * Note that this is different from the text appeared when switching between items.
  * Those messages show the item's name and are different from action bars.
  * The only natural way of displaying action bars is when mounting.
  *
@@ -61,6 +64,7 @@ import java.util.concurrent.Callable;
 public class ActionBar {
 
     private static final JavaPlugin PLUGIN = JavaPlugin.getProvidingPlugin(DeluxeHubPlugin.class);
+    private static final PlatformScheduler SCHEDULER = DeluxeHubPlugin.scheduler();
     private static final MethodHandle CHAT_COMPONENT_TEXT;
     private static final MethodHandle PACKET;
     private static final Object CHAT_MESSAGE_TYPE;
@@ -86,9 +90,11 @@ public class ActionBar {
 
             // JSON Message Builder
             Class<?> chatComponentTextClass = ReflectionUtils.getNMSClass("ChatComponentText");
+            assert chatComponentTextClass != null;
             chatComp = lookup.findConstructor(chatComponentTextClass, MethodType.methodType(void.class, String.class));
 
             // Packet Constructor
+            assert packetPlayOutChatClass != null;
             packet = lookup.findConstructor(packetPlayOutChatClass, MethodType.methodType(void.class, iChatBaseComponentClass, chatMessageTypeClass));
         } catch (NoSuchMethodException | IllegalAccessException | ClassNotFoundException ignored) {
             try {
@@ -97,12 +103,14 @@ public class ActionBar {
 
                 // JSON Message Builder
                 Class<?> chatComponentTextClass = ReflectionUtils.getNMSClass("ChatComponentText");
+                assert chatComponentTextClass != null;
                 chatComp = lookup.findConstructor(chatComponentTextClass, MethodType.methodType(void.class, String.class));
 
                 // Packet Constructor
+                assert packetPlayOutChatClass != null;
                 packet = lookup.findConstructor(packetPlayOutChatClass, MethodType.methodType(void.class, iChatBaseComponentClass, byte.class));
             } catch (NoSuchMethodException | IllegalAccessException ex) {
-                ex.printStackTrace();
+                PLUGIN.getLogger().log(Level.SEVERE, "Failed to initialize ActionBar packet constructors", ex);
             }
         }
 
@@ -127,8 +135,9 @@ public class ActionBar {
             Object component = CHAT_COMPONENT_TEXT.invoke(message);
             packet = PACKET.invoke(component, CHAT_MESSAGE_TYPE);
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            PLUGIN.getLogger().log(Level.SEVERE, "Failed to create action bar packet for player " + player.getName(), throwable);
         }
+
         ReflectionUtils.sendPacket(player, packet);
     }
 
@@ -140,7 +149,9 @@ public class ActionBar {
      * @since 1.0.0
      */
     public static void sendAllActionBar(String message) {
-        for (Player player : Bukkit.getOnlinePlayers()) sendActionBar(player, message);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            sendActionBar(player, message);
+        }
     }
 
     /**
@@ -157,21 +168,19 @@ public class ActionBar {
      * @since 1.0.0
      */
     public static void sendActionBarWhile(Player player, String message, Callable<Boolean> callable) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                try {
-                    if (!callable.call()) {
-                        cancel();
-                        return;
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+        SCHEDULER.runTimerAsync(task -> {
+            try {
+                if (!callable.call()) {
+                    task.cancel();
+                    return;
                 }
-                sendActionBar(player, message);
+            } catch (Exception ex) {
+                PLUGIN.getLogger().log(Level.SEVERE, "Error in action bar callable for player " + player.getName(), ex);
+                task.cancel();
+                return;
             }
-            // Re-sends the messages every 2 seconds so it doesn't go away from the player's screen.
-        }.runTaskTimerAsynchronously(PLUGIN, 0L, 40L);
+            sendActionBar(player, message);
+        }, 1L, 40L);
     }
 
     /**
@@ -187,21 +196,18 @@ public class ActionBar {
      * @since 1.0.0
      */
     public static void sendActionBarWhile(Player player, Callable<String> message, Callable<Boolean> callable) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                try {
-                    if (!callable.call()) {
-                        cancel();
-                        return;
-                    }
-                    sendActionBar(player, message.call());
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+        SCHEDULER.runTimerAsync(task -> {
+            try {
+                if (!callable.call()) {
+                    task.cancel();
+                    return;
                 }
+                sendActionBar(player, message.call());
+            } catch (Exception ex) {
+                PLUGIN.getLogger().log(Level.SEVERE, "Error in action bar callable for player " + player.getName(), ex);
+                task.cancel();
             }
-            // Re-sends the messages every 2 seconds so it doesn't go away from the player's screen.
-        }.runTaskTimerAsynchronously(PLUGIN, 0L, 40L);
+        }, 1L, 40L);
     }
 
     /**
@@ -216,16 +222,13 @@ public class ActionBar {
     public static void sendActionBar(Player player, String message, long duration) {
         if (duration < 1) return;
 
-        new BukkitRunnable() {
-            long repeater = duration;
-
-            @Override
-            public void run() {
-                sendActionBar(player, message);
-                repeater -= 40L;
-                if (repeater - 40L < -20L) cancel();
+        AtomicLong repeater = new AtomicLong(duration);
+        SCHEDULER.runTimerAsync(task -> {
+            sendActionBar(player, message);
+            repeater.addAndGet(-40L);
+            if (repeater.get() - 40L < -20L) {
+                task.cancel();
             }
-            // Re-sends the messages every 2 seconds so it doesn't go away from the player's screen.
-        }.runTaskTimerAsynchronously(PLUGIN, 0L, 40L);
+        }, 1L, 40L);
     }
 }
