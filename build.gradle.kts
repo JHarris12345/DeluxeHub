@@ -3,7 +3,7 @@ plugins {
     id("com.gradleup.shadow") version "9.2.2"
 }
 
-group = "fun.lewisdev"
+group = "net.zithium"
 version = "3.6.7"
 description = "DeluxeHub"
 
@@ -56,11 +56,11 @@ tasks {
 
         archiveClassifier.set("") // Removes "-all" suffix
 
-        relocate("org.bstats", "fun.lewisdev.deluxehub.libs.metrics")
-        relocate("cl.bgmp", "fun.lewisdev.deluxehub.libs.command")
-        relocate("com.tcoded.folialib", "fun.lewisdev.deluxehub.libs.folialib")
-        relocate("de.tr7zw.changeme.nbtapi", "fun.lewisdev.deluxehub.libs.nbt")
-        relocate("net.zithium.library", "fun.lewisdev.deluxehub.libs.library")
-        relocate("com.cryptomorin.xseries", "fun.lewisdev.deluxehub.libs.xseries")
+        relocate("org.bstats", "net.zithium.deluxehub.libs.metrics")
+        relocate("cl.bgmp", "net.zithium.deluxehub.libs.command")
+        relocate("com.tcoded.folialib", "net.zithium.deluxehub.libs.folialib")
+        relocate("de.tr7zw.changeme.nbtapi", "net.zithium.deluxehub.libs.nbt")
+        relocate("net.zithium.library", "net.zithium.deluxehub.libs.library")
+        relocate("com.cryptomorin.xseries", "net.zithium.deluxehub.libs.xseries")
     }
 }

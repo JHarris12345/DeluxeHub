@@ -6,15 +6,24 @@ import cl.bgmp.minecraft.util.commands.CommandsManager;
 import cl.bgmp.minecraft.util.commands.exceptions.CommandException;
 import cl.bgmp.minecraft.util.commands.injection.SimpleInjector;
 import net.zithium.deluxehub.DeluxeHubPlugin;
-import fun.lewisdev.deluxehub.command.commands.*;
-import fun.lewisdev.deluxehub.command.commands.gamemode.*;
-import net.zithium.deluxehub.command.commands.*;
-import net.zithium.deluxehub.command.commands.gamemode.*;
+import net.zithium.deluxehub.command.commands.ClearchatCommand;
+import net.zithium.deluxehub.command.commands.DeluxeHubCommand;
+import net.zithium.deluxehub.command.commands.FlyCommand;
+import net.zithium.deluxehub.command.commands.LobbyCommand;
+import net.zithium.deluxehub.command.commands.LockchatCommand;
+import net.zithium.deluxehub.command.commands.SetLobbyCommand;
+import net.zithium.deluxehub.command.commands.VanishCommand;
+import net.zithium.deluxehub.command.commands.gamemode.AdventureCommand;
+import net.zithium.deluxehub.command.commands.gamemode.CreativeCommand;
+import net.zithium.deluxehub.command.commands.gamemode.GamemodeCommand;
+import net.zithium.deluxehub.command.commands.gamemode.SpectatorCommand;
+import net.zithium.deluxehub.command.commands.gamemode.SurvivalCommand;
 import net.zithium.deluxehub.config.ConfigType;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CommandManager {
 
