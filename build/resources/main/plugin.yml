@@ -1,9 +1,10 @@
 name: 'DeluxeHub'
-author: ItsLewizzz
+authors: [ ItzSave, ItsLewizzz ]
 version: '3.6.7'
 description: "The ultimate all in one hub solution."
-api-version: 1.19
-main: fun.lewisdev.deluxehub.DeluxeHubPlugin
+api-version: 1.20
+main: net.zithium.deluxehub.DeluxeHubPlugin
+folia-supported: true
 loadbefore: [Essentials]
 softdepend: [PlaceholderAPI, Multiverse-Core, MythicDungeons]
 permissions:
