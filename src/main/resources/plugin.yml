@@ -1,12 +1,12 @@
-name: 'DeluxeHub'
-authors: [ ItzSave, ItsLewizzz ]
-version: '${version}'
-description: "The ultimate all in one hub solution."
-api-version: 1.20
-main: net.zithium.deluxehub.DeluxeHubPlugin
-folia-supported: true
+name: ${project.name}
+author: ItsLewizzz
+version: ${project.version}
+description: ${project.description}
+website: ${project.url}
+api-version: 1.13
+main: fun.lewisdev.deluxehub.DeluxeHubPlugin
 loadbefore: [Essentials]
-softdepend: [PlaceholderAPI, Multiverse-Core, MythicDungeons]
+softdepend: [PlaceholderAPI, HeadDatabase, Multiverse-Core, floodgate]
 permissions:
   deluxehub.*:
     description: Gives access to all DeluxeHub permissions

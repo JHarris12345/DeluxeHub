@@ -1,6 +1,6 @@
 # Server Selector GUI
 # The ID of this inventory is 'serverselector' which you can open using the [MENU] action (e.g. "[MENU] serverselector").
-# You can create more custom GUIs, just copy this entire file and paste a new one in the "menus" directory. The name of the file is the menu ID.
+# You can create more custom GUIs, just copy this entire file and paste a new one in the menus directory. The name of the file is the menu ID.
 #
 # PLAYER HEADS
 #   You can have player heads, using player names, base64 or HeadDatabase IDs.
@@ -13,6 +13,9 @@
 #       material: PLAYER_HEAD
 #       base64: <base64 id>
 #
+#     HeadDatabase
+#       material: PLAYER_HEAD
+#       hdb: <hdb id>
 #
 # ITEM FLAGS
 #   You can add flags to the item (https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/inventory/ItemFlag.html)
@@ -57,7 +60,7 @@ items:
     actions:
       - '[CLOSE]'
       - '[MESSAGE] &7Sending you to: &eFactions'
-      - '[PROXY] factions'
+      - '[BUNGEE] factions'
       # For multi-world servers using Multiverse-Core, use the action:
       # - '[CONSOLE] mvtp %player% world'
   survival:
@@ -72,4 +75,4 @@ items:
     actions:
       - '[CLOSE]'
       - '[MESSAGE] &7Sending you to: &eSurvival'
-      - '[PROXY] survival'
+      - '[BUNGEE] survival'
