@@ -2,7 +2,7 @@
 .DS_Store
 
 ### Maven ###
-
+build/
 target/
 dependency-reduced-pom.xml
 pom.xml.versionsBackup
