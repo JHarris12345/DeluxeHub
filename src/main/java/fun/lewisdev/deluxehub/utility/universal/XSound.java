@@ -1089,7 +1089,7 @@ public enum XSound {
 
     @SuppressWarnings({"Guava", "OptionalAssignedToNull"})
     public Sound parseSound() {
-        com.google.common.base.Optional<Sound> cachedSound = CACHE.getIfPresent(this);
+        /*com.google.common.base.Optional<Sound> cachedSound = CACHE.getIfPresent(this);
         if (cachedSound != null) return cachedSound.orNull();
         com.google.common.base.Optional<Sound> sound;
 
@@ -1106,7 +1106,8 @@ public enum XSound {
 
         // Put nulls too, because there's no point of parsing them again if it's going to give us null again.
         CACHE.put(this, sound);
-        return sound.orNull();
+        return sound.orNull();*/
+        return null;
     }
 
     /**
