@@ -192,7 +192,7 @@ public class DeluxeHubCommand {
 
             Player player = (Player) sender;
 
-            if (DeluxeHubPlugin.getInstance().isPlayerBedrock(player.getUniqueId())) {
+            if (DeluxeHubPlugin.getInstance().isPlayerBedrock(player.getUniqueId()) && args.getString(1).equalsIgnoreCase("survivalselector")) {
                 DeluxeHubPlugin.floodgate.sendForm(player.getUniqueId(), DeluxeHubPlugin.plugin.createSurvivalSelector(player));
 
             } else {
