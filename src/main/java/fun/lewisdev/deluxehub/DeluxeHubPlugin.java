@@ -222,8 +222,8 @@ public class DeluxeHubPlugin extends JavaPlugin {
         return SimpleForm.builder().title(DeluxeHubPlugin.colour("&0&lRealm Selector"))
                 .content("Select which realm you'd like to play")
                 .button(PlaceholderAPI.setPlaceholders(null, DeluxeHubPlugin.colour("&0Survival &8(%math_{redisbungee_greensurvival}+{redisbungee_bluesurvival}% online)")), FormImage.Type.PATH, "textures/items/diamond_pickaxe.png")
-                .button(PlaceholderAPI.setPlaceholders(null, DeluxeHubPlugin.colour("&0Skyblock &8(%redisbungee_skyblock% online)")), FormImage.Type.PATH, "textures/items/emerald.png")
-                .button(PlaceholderAPI.setPlaceholders(null, DeluxeHubPlugin.colour("&0Factions &8(%redisbungee_factions% online)")), FormImage.Type.PATH, "textures/items/gold_sword.png")
+                .button(PlaceholderAPI.setPlaceholders(null, DeluxeHubPlugin.colour("&0Skyblock &8(%math_{redisbungee_skyblock}+{redisbungee_skyblockspeed}% online)")), FormImage.Type.PATH, "textures/items/emerald.png")
+                .button(PlaceholderAPI.setPlaceholders(null, DeluxeHubPlugin.colour("&0Factions &8(%math_{redisbungee_factions}+{redisbungee_factionsspeed}% online)")), FormImage.Type.PATH, "textures/items/gold_sword.png")
                 .validResultHandler(response -> {
                     switch (response.clickedButtonId()) {
                         case 0: // Survival
@@ -236,7 +236,9 @@ public class DeluxeHubPlugin extends JavaPlugin {
                             break;
 
                         case 2: // Factions
-                            DeluxeHubPlugin.getInstance().getActionManager().executeActions(player, Collections.singletonList("[BUNGEE] factions"));
+                            SimpleForm factionsSelector = createFactionsSelector(player);
+                            DeluxeHubPlugin.floodgate.sendForm(player.getUniqueId(), factionsSelector);
+                            //DeluxeHubPlugin.getInstance().getActionManager().executeActions(player, Collections.singletonList("[BUNGEE] factions"));
                             break;
                     }
                 })
@@ -257,6 +259,30 @@ public class DeluxeHubPlugin extends JavaPlugin {
 
                         case 1: // Green Survival
                             DeluxeHubPlugin.getInstance().getActionManager().executeActions(player, Collections.singletonList("[BUNGEE] greensurvival"));
+                            break;
+
+                        case 2: // Back
+                            DeluxeHubPlugin.floodgate.sendForm(player.getUniqueId(), createServerSelector(player));
+                            break;
+                    }
+                })
+                .build();
+    }
+
+    public SimpleForm createFactionsSelector(Player player) {
+        return SimpleForm.builder().title(DeluxeHubPlugin.colour("&0&lFactions Realms"))
+                .content("Choose your Factions realm")
+                .button(PlaceholderAPI.setPlaceholders(null, DeluxeHubPlugin.colour("&0Main Factions &8(%redisbungee_factions% online)")), FormImage.Type.PATH, "textures/items/dye_powder_red.png")
+                .button(PlaceholderAPI.setPlaceholders(null, DeluxeHubPlugin.colour("&0Speed Map &8(%redisbungee_factionsspeed% online)")), FormImage.Type.PATH, "textures/items/dye_powder_orange.png")
+                .button(DeluxeHubPlugin.colour("&cBack"))
+                .validResultHandler(response2 -> {
+                    switch (response2.clickedButtonId()) {
+                        case 0: // Main
+                            DeluxeHubPlugin.getInstance().getActionManager().executeActions(player, Collections.singletonList("[BUNGEE] factions"));
+                            break;
+
+                        case 1: // Speed
+                            DeluxeHubPlugin.getInstance().getActionManager().executeActions(player, Collections.singletonList("[BUNGEE] factionsspeed"));
                             break;
 
                         case 2: // Back
