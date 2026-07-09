@@ -236,9 +236,9 @@ public class DeluxeHubPlugin extends JavaPlugin {
                             break;
 
                         case 2: // Factions
-                            SimpleForm factionsSelector = createFactionsSelector(player);
-                            DeluxeHubPlugin.floodgate.sendForm(player.getUniqueId(), factionsSelector);
-                            //DeluxeHubPlugin.getInstance().getActionManager().executeActions(player, Collections.singletonList("[BUNGEE] factions"));
+                            /*SimpleForm factionsSelector = createFactionsSelector(player);
+                            DeluxeHubPlugin.floodgate.sendForm(player.getUniqueId(), factionsSelector);*/
+                            DeluxeHubPlugin.getInstance().getActionManager().executeActions(player, Collections.singletonList("[BUNGEE] factions"));
                             break;
                     }
                 })
